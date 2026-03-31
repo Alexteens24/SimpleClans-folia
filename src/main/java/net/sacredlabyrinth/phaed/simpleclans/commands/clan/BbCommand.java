@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 import java.util.Objects;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 @CommandAlias("%clan")
 @Conditions("%basic_conditions|verified")

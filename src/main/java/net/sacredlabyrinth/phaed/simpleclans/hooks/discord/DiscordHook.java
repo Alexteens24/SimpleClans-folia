@@ -380,7 +380,7 @@ public class DiscordHook implements Listener {
 
         try {
             availableCategory.createTextChannel(clanTag).complete();
-            SimpleClans.debug(String.format("[%s] Creating a discord text channel for %s clan", Thread.currentThread().getId(), clanTag));
+            SimpleClans.debug(String.format("[%s] Creating a discord text channel for %s clan", Thread.currentThread().threadId(), clanTag));
         } catch (ErrorResponseException ex) {
             Response response = ex.getResponse();
             plugin.getLogger().warning(String.format("Could not create a channel for clan %s, error %d - %s",

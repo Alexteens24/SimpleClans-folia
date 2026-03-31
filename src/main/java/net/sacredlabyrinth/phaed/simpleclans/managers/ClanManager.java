@@ -1,7 +1,8 @@
 package net.sacredlabyrinth.phaed.simpleclans.managers;
 
 import com.cryptomorin.xseries.XMaterial;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.sacredlabyrinth.phaed.simpleclans.*;
 import net.sacredlabyrinth.phaed.simpleclans.events.ClanBalanceUpdateEvent;
 import net.sacredlabyrinth.phaed.simpleclans.events.CreateClanEvent;
@@ -12,7 +13,7 @@ import net.sacredlabyrinth.phaed.simpleclans.utils.CurrencyFormat;
 import net.sacredlabyrinth.phaed.simpleclans.utils.VanishUtils;
 import net.sacredlabyrinth.phaed.simpleclans.uuid.UUIDMigration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -32,8 +33,8 @@ import java.util.logging.Level;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 /**
  * @author phaed
@@ -207,7 +208,6 @@ public final class ClanManager {
         return clans.get(Helper.cleanTag(tag));
     }
 
-    @SuppressWarnings("deprecation")
     @Nullable
     public Clan getClanByPlayerName(String playerName) {
         return getClanByPlayerUniqueId(Bukkit.getOfflinePlayer(playerName).getUniqueId());
@@ -287,7 +287,6 @@ public final class ClanManager {
         return cp;
     }
 
-    @SuppressWarnings("deprecation")
     @Nullable
     public ClanPlayer getClanPlayer(String playerName) {
         return getClanPlayer(Bukkit.getOfflinePlayer(playerName).getUniqueId());
@@ -330,7 +329,6 @@ public final class ClanManager {
         return clanPlayers.get(uuid);
     }
 
-    @SuppressWarnings("deprecation")
     @Nullable
     public ClanPlayer getAnyClanPlayer(String playerName) {
         for (ClanPlayer cp : getAllClanPlayers()) {
@@ -383,7 +381,6 @@ public final class ClanManager {
         return cp;
     }
 
-    @SuppressWarnings("deprecation")
     @NotNull
     public ClanPlayer getCreateClanPlayer(String playerName) {
         return getCreateClanPlayer(Bukkit.getOfflinePlayer(playerName).getUniqueId());
@@ -399,8 +396,8 @@ public final class ClanManager {
             return;
         }
 
-        plugin.getProxyManager().sendMessage("ALL", ChatColor.DARK_GRAY + "* " + AQUA + msg);
-        Bukkit.getConsoleSender().sendMessage(AQUA + "[" + lang("server.announce") + "] " + ChatColor.WHITE + msg);
+        plugin.getProxyManager().sendMessage("ALL", LegacyColor.DARK_GRAY + "* " + AQUA + msg);
+        Bukkit.getConsoleSender().sendMessage(AQUA + "[" + lang("server.announce") + "] " + LegacyColor.WHITE + msg);
     }
 
     /**
@@ -418,31 +415,53 @@ public final class ClanManager {
         }
 
         if (plugin.getSettingsManager().is(DISPLAY_CHAT_TAGS)) {
-            String prefix = plugin.getPermissionsManager().getPrefix(player);
-            // String suffix = plugin.getPermissionsManager().getSuffix(player);
-            String lastColor = plugin.getSettingsManager().is(COLOR_CODE_FROM_PREFIX_FOR_NAME)
-                    ? ChatUtils.getLastColorCode(prefix)
-                    : ChatColor.WHITE + "";
-            String fullName = player.getName();
-
             ClanPlayer cp = plugin.getClanManager().getAnyClanPlayer(player.getUniqueId());
-
             if (cp == null) {
                 return;
             }
 
-            if (cp.isTagEnabled()) {
-                Clan clan = cp.getClan();
-
-                if (clan != null) {
-                    fullName = clan.getTagLabel(cp.isLeader()) + lastColor + fullName + ChatColor.WHITE;
-                }
-
-                player.setDisplayName(fullName);
-            } else {
-                player.setDisplayName(lastColor + fullName + ChatColor.WHITE);
-            }
+            player.displayName(getPlayerDisplayNameComponent(player));
         }
+    }
+
+    public @NotNull String getPlayerDisplayName(@Nullable Player player) {
+        if (player == null) {
+            return "";
+        }
+
+        if (!plugin.getSettingsManager().is(DISPLAY_CHAT_TAGS)) {
+            return player.getName();
+        }
+
+        ClanPlayer cp = plugin.getClanManager().getAnyClanPlayer(player.getUniqueId());
+        if (cp == null) {
+            return player.getName();
+        }
+
+        String prefix = plugin.getPermissionsManager().getPrefix(player);
+        String lastColor = plugin.getSettingsManager().is(COLOR_CODE_FROM_PREFIX_FOR_NAME)
+                ? ChatUtils.getLastColorCode(prefix)
+                : LegacyColor.WHITE + "";
+        String fullName = player.getName();
+
+        if (cp.isTagEnabled()) {
+            Clan clan = cp.getClan();
+            if (clan != null) {
+                fullName = clan.getTagLabel(cp.isLeader()) + lastColor + fullName + LegacyColor.WHITE;
+            }
+        } else {
+            fullName = lastColor + fullName + LegacyColor.WHITE;
+        }
+
+        return fullName;
+    }
+
+    public @NotNull Component getPlayerDisplayNameComponent(@Nullable Player player) {
+        String displayName = getPlayerDisplayName(player);
+        if (displayName.isEmpty()) {
+            return Component.empty();
+        }
+        return LegacyComponentSerializer.legacySection().deserialize(displayName);
     }
 
     /**
@@ -464,7 +483,6 @@ public final class ClanManager {
         }
     }
 
-    @SuppressWarnings("deprecation")
     public void ban(String playerName) {
         ban(Bukkit.getOfflinePlayer(playerName).getUniqueId());
     }
@@ -486,7 +504,7 @@ public final class ClanManager {
                 clan.disband(null, false, false);
             } else {
                 cp.setClan(null);
-                cp.addPastClan(clan.getColorTag() + (cp.isLeader() ? ChatColor.DARK_RED + "*" : ""));
+                cp.addPastClan(clan.getColorTag() + (cp.isLeader() ? LegacyColor.DARK_RED + "*" : ""));
                 cp.setLeader(false);
                 cp.setJoinDate(0);
                 clan.removeMember(uuid);
@@ -530,17 +548,17 @@ public final class ClanManager {
 
         if (h != null) {
             if (h.getType().equals(XMaterial.CHAINMAIL_HELMET.parseMaterial())) {
-                out += ChatColor.WHITE + lang("armor.h", player);
+                out += LegacyColor.WHITE + lang("armor.h", player);
             } else if (h.getType().equals(XMaterial.DIAMOND_HELMET.parseMaterial())) {
                 out += AQUA + lang("armor.h", player);
             } else if (h.getType().equals(XMaterial.GOLDEN_HELMET.parseMaterial())) {
-                out += ChatColor.YELLOW + lang("armor.h", player);
+                out += LegacyColor.YELLOW + lang("armor.h", player);
             } else if (h.getType().equals(XMaterial.IRON_HELMET.parseMaterial())) {
-                out += ChatColor.GRAY + lang("armor.h", player);
+                out += LegacyColor.GRAY + lang("armor.h", player);
             } else if (h.getType().equals(XMaterial.LEATHER_HELMET.parseMaterial())) {
-                out += ChatColor.GOLD + lang("armor.h", player);
+                out += LegacyColor.GOLD + lang("armor.h", player);
             } else if (h.getType().equals(XMaterial.AIR.parseMaterial())) {
-                out += ChatColor.BLACK + lang("armor.h", player);
+                out += LegacyColor.BLACK + lang("armor.h", player);
             } else {
                 out += RED + lang("armor.h", player);
             }
@@ -549,17 +567,17 @@ public final class ClanManager {
 
         if (c != null) {
             if (c.getType().equals(XMaterial.CHAINMAIL_CHESTPLATE.parseMaterial())) {
-                out += ChatColor.WHITE + lang("armor.c", player);
+                out += LegacyColor.WHITE + lang("armor.c", player);
             } else if (c.getType().equals(XMaterial.DIAMOND_CHESTPLATE.parseMaterial())) {
                 out += AQUA + lang("armor.c", player);
             } else if (c.getType().equals(XMaterial.GOLDEN_CHESTPLATE.parseMaterial())) {
-                out += ChatColor.YELLOW + lang("armor.c", player);
+                out += LegacyColor.YELLOW + lang("armor.c", player);
             } else if (c.getType().equals(XMaterial.IRON_CHESTPLATE.parseMaterial())) {
-                out += ChatColor.GRAY + lang("armor.c", player);
+                out += LegacyColor.GRAY + lang("armor.c", player);
             } else if (c.getType().equals(XMaterial.LEATHER_CHESTPLATE.parseMaterial())) {
-                out += ChatColor.GOLD + lang("armor.c", player);
+                out += LegacyColor.GOLD + lang("armor.c", player);
             } else if (c.getType().equals(XMaterial.AIR.parseMaterial())) {
-                out += ChatColor.BLACK + lang("armor.c", player);
+                out += LegacyColor.BLACK + lang("armor.c", player);
             } else {
                 out += RED + lang("armor.c", player);
             }
@@ -568,7 +586,7 @@ public final class ClanManager {
 
         if (l != null) {
             if (l.getType().equals(XMaterial.CHAINMAIL_LEGGINGS.parseMaterial())) {
-                out += ChatColor.WHITE + lang("armor.l", player);
+                out += LegacyColor.WHITE + lang("armor.l", player);
             } else if (l.getType().equals(XMaterial.DIAMOND_LEGGINGS.parseMaterial())) {
                 out += lang("armor.l", player);
             } else if (l.getType().equals(XMaterial.GOLDEN_LEGGINGS.parseMaterial())) {
@@ -587,17 +605,17 @@ public final class ClanManager {
 
         if (b != null) {
             if (b.getType().equals(XMaterial.CHAINMAIL_BOOTS.parseMaterial())) {
-                out += ChatColor.WHITE + lang("armor.B", player);
+                out += LegacyColor.WHITE + lang("armor.B", player);
             } else if (b.getType().equals(XMaterial.DIAMOND_BOOTS.parseMaterial())) {
                 out += AQUA + lang("armor.B", player);
             } else if (b.getType().equals(XMaterial.GOLDEN_BOOTS.parseMaterial())) {
-                out += ChatColor.YELLOW + lang("armor.B", player);
+                out += LegacyColor.YELLOW + lang("armor.B", player);
             } else if (b.getType().equals(XMaterial.IRON_BOOTS.parseMaterial())) {
-                out += ChatColor.WHITE + lang("armor.B", player);
+                out += LegacyColor.WHITE + lang("armor.B", player);
             } else if (b.getType().equals(XMaterial.LEATHER_BOOTS.parseMaterial())) {
-                out += ChatColor.GOLD + lang("armor.B", player);
+                out += LegacyColor.GOLD + lang("armor.B", player);
             } else if (b.getType().equals(XMaterial.AIR.parseMaterial())) {
-                out += ChatColor.BLACK + lang("armor.B", player);
+                out += LegacyColor.BLACK + lang("armor.B", player);
             } else {
                 out += RED + lang("armor.B", player);
             }
@@ -635,35 +653,35 @@ public final class ClanManager {
 
         if (count > 0) {
             String countString = count > 1 ? count + "" : "";
-            out += ChatColor.YELLOW + lang("weapon.S", player) + headColor + countString;
+            out += LegacyColor.YELLOW + lang("weapon.S", player) + headColor + countString;
         }
 
         count = getItemCount(inv, XMaterial.IRON_SWORD);
 
         if (count > 0) {
             String countString = count > 1 ? count + "" : "";
-            out += ChatColor.WHITE + lang("weapon.S", player) + headColor + countString;
+            out += LegacyColor.WHITE + lang("weapon.S", player) + headColor + countString;
         }
 
         count = getItemCount(inv, XMaterial.STONE_SWORD);
 
         if (count > 0) {
             String countString = count > 1 ? count + "" : "";
-            out += ChatColor.GRAY + lang("weapon.S", player) + headColor + countString;
+            out += LegacyColor.GRAY + lang("weapon.S", player) + headColor + countString;
         }
 
         count = getItemCount(inv, XMaterial.WOODEN_SWORD);
 
         if (count > 0) {
             String countString = count > 1 ? count + "" : "";
-            out += ChatColor.GOLD + lang("weapon.S", player) + headColor + countString;
+            out += LegacyColor.GOLD + lang("weapon.S", player) + headColor + countString;
         }
 
         count = getItemCount(inv, XMaterial.BOW);
 
         if (count > 0) {
             String countString = count > 1 ? count + "" : "";
-            out += ChatColor.GOLD + lang("weapon.B", player) + headColor + countString;
+            out += LegacyColor.GOLD + lang("weapon.B", player) + headColor + countString;
         }
 
         count = getItemCount(inv, XMaterial.ARROW);
@@ -671,7 +689,7 @@ public final class ClanManager {
         count += getItemCount(inv, XMaterial.TIPPED_ARROW);
 
         if (count > 0) {
-            out += ChatColor.WHITE + lang("weapon.A", player) + headColor + count;
+            out += LegacyColor.WHITE + lang("weapon.A", player) + headColor + count;
         }
 
         if (out.length() == 0) {
@@ -765,7 +783,7 @@ public final class ClanManager {
         if (count == 0) {
             return lang("none", player);
         } else {
-            return ((int) count) + "" + ChatColor.GOLD + "p";
+            return ((int) count) + "" + LegacyColor.GOLD + "p";
         }
     }
 
@@ -776,9 +794,9 @@ public final class ClanManager {
         StringBuilder out = new StringBuilder();
 
         if (length >= 16) {
-            out.append(ChatColor.GREEN);
+            out.append(LegacyColor.GREEN);
         } else if (length >= 8) {
-            out.append(ChatColor.GOLD);
+            out.append(LegacyColor.GOLD);
         } else {
             out.append(RED);
         }
@@ -1051,9 +1069,11 @@ public final class ClanManager {
         if (plugin.getPermissionsManager().hasEconomy()) {
             if (plugin.getPermissionsManager().playerHasMoney(player, price)) {
                 plugin.getPermissionsManager().chargePlayer(player, price, Cause.RESET_KDR);
-                player.spigot().sendMessage(new TextComponent(RED + MessageFormat.format(lang("account.has.been.debited", player), CurrencyFormat.format(price))));
+                player.sendMessage(LegacyComponentSerializer.legacySection().deserialize(
+                        RED + MessageFormat.format(lang("account.has.been.debited", player), CurrencyFormat.format(price))));
             } else {
-                player.spigot().sendMessage(new TextComponent(RED + MessageFormat.format(lang("not.sufficient.money", player), CurrencyFormat.format(price))));
+                player.sendMessage(LegacyComponentSerializer.legacySection().deserialize(
+                        RED + MessageFormat.format(lang("not.sufficient.money", player), CurrencyFormat.format(price))));
                 return false;
             }
         }
@@ -1097,8 +1117,13 @@ public final class ClanManager {
                         clan.addBb(player.getName(), lang("bb.clan.withdraw", CurrencyFormat.format(price)));
                         return true;
                     }
+                    break;
                 case NOT_ENOUGH_BALANCE:
                     player.sendMessage(lang("clan.bank.not.enough.money", player));
+                    break;
+                case CANCELLED:
+                case NEGATIVE_VALUE:
+                    break;
             }
         }
 

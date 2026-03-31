@@ -3,7 +3,6 @@ package net.sacredlabyrinth.phaed.simpleclans.tasks;
 import net.sacredlabyrinth.phaed.simpleclans.Helper;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
 import net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.text.MessageFormat;
 
@@ -14,7 +13,7 @@ import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.Con
  *
  * @author roinujnosde
  */
-public class UpkeepWarningTask extends BukkitRunnable {
+public class UpkeepWarningTask implements Runnable {
 	private final SimpleClans plugin;
 	private final SettingsManager sm;
 
@@ -32,7 +31,7 @@ public class UpkeepWarningTask extends BukkitRunnable {
     	int minute = sm.getInt(TASKS_COLLECT_UPKEEP_WARNING_MINUTE);
         long delay = Helper.getDelayTo(hour, minute);
         
-		this.runTaskTimer(plugin, delay * 20, 86400 * 20);
+        plugin.getFoliaScheduler().runGlobalTimer(task -> run(), delay * 20L, 86400L * 20L);
     }
 
     /**

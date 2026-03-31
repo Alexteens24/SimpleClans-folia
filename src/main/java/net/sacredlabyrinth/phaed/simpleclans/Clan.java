@@ -1,8 +1,9 @@
 package net.sacredlabyrinth.phaed.simpleclans;
 
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.sacredlabyrinth.phaed.simpleclans.events.*;
 import net.sacredlabyrinth.phaed.simpleclans.hooks.papi.Placeholder;
 import net.sacredlabyrinth.phaed.simpleclans.loggers.BankLog;
@@ -17,7 +18,6 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.events.ClanBalanceUpdateEvent.Cause;
 import static net.sacredlabyrinth.phaed.simpleclans.loggers.BankLogger.Operation.*;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.*;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.*;
 
 /**
  * @author phaed
@@ -414,7 +414,6 @@ public class Clan implements Serializable, Comparable<Clan> {
         return false;
     }
 
-    @SuppressWarnings("deprecation")
     public boolean isMember(String playerName) {
         return isMember(Bukkit.getOfflinePlayer(playerName).getUniqueId());
     }
@@ -631,6 +630,10 @@ public class Clan implements Serializable, Comparable<Clan> {
         return capeUrl;
     }
 
+    public String getRawCapeUrl() {
+        return capeUrl;
+    }
+
     /**
      * (used internally)
      *
@@ -638,6 +641,10 @@ public class Clan implements Serializable, Comparable<Clan> {
      */
     @Deprecated
     public void setCapeUrl(String capeUrl) {
+        this.capeUrl = capeUrl;
+    }
+
+    public void setRawCapeUrl(String capeUrl) {
         this.capeUrl = capeUrl;
     }
 
@@ -775,7 +782,6 @@ public class Clan implements Serializable, Comparable<Clan> {
         return false;
     }
 
-    @SuppressWarnings("deprecation")
     public boolean isLeader(String playerName) {
         return isLeader(Bukkit.getOfflinePlayer(playerName).getUniqueId());
     }
@@ -1018,7 +1024,6 @@ public class Clan implements Serializable, Comparable<Clan> {
         Bukkit.getPluginManager().callEvent(new PlayerJoinedClanEvent(this, cp));
     }
 
-    @SuppressWarnings("deprecation")
     public void removePlayerFromClan(String playerName) {
         removePlayerFromClan(Bukkit.getOfflinePlayer(playerName).getUniqueId());
     }
@@ -1057,7 +1062,6 @@ public class Clan implements Serializable, Comparable<Clan> {
         Bukkit.getPluginManager().callEvent(new PlayerKickedClanEvent(this, cp));
     }
 
-    @SuppressWarnings("deprecation")
     public void promote(String playerName) {
         promote(Bukkit.getOfflinePlayer(playerName).getUniqueId());
     }
@@ -1079,7 +1083,6 @@ public class Clan implements Serializable, Comparable<Clan> {
         Bukkit.getPluginManager().callEvent(new PlayerPromoteEvent(this, cp));
     }
 
-    @SuppressWarnings("deprecation")
     public void demote(String playerName) {
         demote(Bukkit.getOfflinePlayer(playerName).getUniqueId());
     }
@@ -1357,7 +1360,6 @@ public class Clan implements Serializable, Comparable<Clan> {
      * @param msg the bb message
      * @return true if sent
      */
-    @SuppressWarnings("deprecation")
     private boolean sendBbTime(Player player, String msg) {
         try {
             int index = msg.indexOf("_");
@@ -1370,11 +1372,10 @@ public class Clan implements Serializable, Comparable<Clan> {
             long time = (System.currentTimeMillis() - Long.parseLong(msg.substring(0, index))) / 1000L;
             msg = ChatUtils.parseColors(bbPrefix + msg.substring(++index));
 
-            BaseComponent[] baseComponent = TextComponent.fromLegacyText(msg);
-            TextComponent textMessage = new TextComponent(baseComponent);
-            textMessage.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(
-                    Dates.formatTime(time, 1) + lang("bb.ago"))));
-            player.spigot().sendMessage(textMessage);
+            Component textMessage = ChatUtils.toLegacyComponent(msg)
+                    .hoverEvent(HoverEvent.showText(ChatUtils.toLegacyComponent(
+                            Dates.formatTime(time, 1) + lang("bb.ago"))));
+            player.sendMessage(textMessage);
             return true;
         } catch (Exception rock) {
             return false;
@@ -1741,12 +1742,12 @@ public class Clan implements Serializable, Comparable<Clan> {
         }
         banner = banner.clone();
         banner.setAmount(1);
+        banner.setData(DataComponentTypes.TOOLTIP_DISPLAY,
+                TooltipDisplay.tooltipDisplay().addHiddenComponents(DataComponentTypes.BANNER_PATTERNS));
         ItemMeta itemMeta = banner.getItemMeta();
         if (itemMeta != null) {
-            // hides the banner patterns from the lore (I don't know why it's called POTION_EFFECTS)
-            itemMeta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
-            itemMeta.setLore(null);
-            itemMeta.setDisplayName(null);
+            itemMeta.lore(null);
+            itemMeta.customName(null);
             banner.setItemMeta(itemMeta);
         }
         this.banner = banner;

@@ -87,7 +87,7 @@ public class LanguageSelectorFrame extends SCFrame {
     private String getCrowdinLink(@NotNull Locale locale) {
         String base = "https://crowdin.com/project/simpleclans/";
         //only known exception
-        if (locale.equals(new Locale("uk", "UA"))) {
+        if (locale.equals(Locale.of("uk", "UA"))) {
             return base + "uk";
         }
         if (locale.getLanguage().equalsIgnoreCase(locale.getCountry())) {

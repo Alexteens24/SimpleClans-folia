@@ -7,7 +7,6 @@ import net.sacredlabyrinth.phaed.simpleclans.events.ClanBalanceUpdateEvent;
 import net.sacredlabyrinth.phaed.simpleclans.loggers.BankOperator;
 import net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager;
 import net.sacredlabyrinth.phaed.simpleclans.utils.CurrencyFormat;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.text.MessageFormat;
 
@@ -18,7 +17,7 @@ import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.Con
  *
  * @author roinujnosde
  */
-public class CollectUpkeepTask extends BukkitRunnable {
+public class CollectUpkeepTask implements Runnable {
 	private final SimpleClans plugin;
 	private final SettingsManager settingsManager;
 	
@@ -35,7 +34,7 @@ public class CollectUpkeepTask extends BukkitRunnable {
     	int minute = settingsManager.getInt(TASKS_COLLECT_UPKEEP_MINUTE);
         long delay = Helper.getDelayTo(hour, minute);
 
-        this.runTaskTimer(plugin, delay * 20, 86400 * 20);
+        plugin.getFoliaScheduler().runGlobalTimer(task -> run(), delay * 20L, 86400L * 20L);
     }
 
     /**

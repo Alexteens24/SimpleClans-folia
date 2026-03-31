@@ -4,13 +4,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.logging.Level;
 
@@ -28,7 +28,7 @@ public class UpdateChecker {
 
 	public UpdateChecker(SimpleClans plugin) {
 		this.plugin = plugin;
-		version = plugin.getDescription().getVersion().split("-")[0]; //removing trailing hash
+		version = plugin.getPluginMeta().getVersion().split("-")[0]; //removing trailing hash
 		userAgent = "SimpleClans/" + version;
 	}
 
@@ -37,35 +37,31 @@ public class UpdateChecker {
 	 * 
 	 */
 	public void check() {
-		new BukkitRunnable() {
+		plugin.getFoliaScheduler().runAsync(() -> {
+			try {
+				URL url = URI.create(LATEST_VERSION_URL).toURL();
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.addRequestProperty("User-Agent", userAgent);
+				InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+				
+				JsonElement parse = JsonParser.parseReader(reader);
+				if (parse.isJsonObject()) {
+					String latestVersion = parse.getAsJsonObject().get("name").getAsString();
 
-			@Override
-			public void run() {
-				try {
-					URL url = new URL(LATEST_VERSION_URL);
-					HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-					connection.addRequestProperty("User-Agent", userAgent);
-					InputStreamReader reader = new InputStreamReader(connection.getInputStream());
-					
-					JsonElement parse = JsonParser.parseReader(reader);
-					if (parse.isJsonObject()) {
-						String latestVersion = parse.getAsJsonObject().get("name").getAsString();
-
-						if (compareVersions(version, latestVersion) < 0) {
-							plugin.getLogger().info(String.format("You're running an outdated version (%s).", version));
-							plugin.getLogger().info(String.format("The latest version is %s. Download it at:", latestVersion));
-							plugin.getLogger().info("https://www.spigotmc.org/resources/simpleclans.71242/");
-						}
-						
+					if (compareVersions(version, latestVersion) < 0) {
+						plugin.getLogger().info(String.format("You're running an outdated version (%s).", version));
+						plugin.getLogger().info(String.format("The latest version is %s. Download it at:", latestVersion));
+						plugin.getLogger().info("https://www.spigotmc.org/resources/simpleclans.71242/");
 					}
 					
-					reader.close();
-				} catch (MalformedURLException ignored) {
-				} catch (IOException | JsonParseException ex) {
-					plugin.getLogger().log(Level.WARNING, "Error checking the plugin version...");
 				}
+				
+				reader.close();
+			} catch (MalformedURLException ignored) {
+			} catch (IOException | JsonParseException ex) {
+				plugin.getLogger().log(Level.WARNING, "Error checking the plugin version...");
 			}
-		}.runTaskAsynchronously(plugin);
+		});
 	}
 
 	public static int compareVersions(@NotNull String a, @NotNull String b) {

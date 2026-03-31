@@ -4,7 +4,7 @@ import net.sacredlabyrinth.phaed.simpleclans.*;
 import net.sacredlabyrinth.phaed.simpleclans.events.AddKillEvent;
 import net.sacredlabyrinth.phaed.simpleclans.managers.PermissionsManager;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -98,7 +98,7 @@ public class PlayerDeath extends SCListener {
                 if (player == null) {
                     continue;
                 }
-                player.sendMessage(ChatColor.AQUA + lang("player.got.money", player, money,
+                player.sendMessage(LegacyColor.AQUA + lang("player.got.money", player, money,
                         victim.getName(), attacker.getKDR()));
                 plugin.getPermissionsManager().grantPlayer(player, money, PLAYER_KILLED);
             }
@@ -118,7 +118,8 @@ public class PlayerDeath extends SCListener {
             if (attackerAddress != null && victimAddress != null) {
                 if (attackerAddress.getHostString().equals(victimAddress.getHostString())) {
                     plugin.getLogger().log(Level.INFO, "Blocked same IP kill calculating: {0} killed {1}. IP: {2}",
-                            new Object[]{attacker.getDisplayName(), victim.getDisplayName(),
+                            new Object[]{plugin.getClanManager().getPlayerDisplayName(attacker),
+                                    plugin.getClanManager().getPlayerDisplayName(victim),
                                     attackerAddress.getHostString()});
                     return true;
                 }

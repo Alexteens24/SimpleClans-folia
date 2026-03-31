@@ -1,6 +1,8 @@
 package net.sacredlabyrinth.phaed.simpleclans.ui;
 
 import com.cryptomorin.xseries.XMaterial;
+import net.kyori.adventure.text.Component;
+import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -40,8 +42,8 @@ public class SCComponentImpl extends SCComponent {
 		this.item = item;
 		ItemMeta itemMeta = item.getItemMeta();
 		if (itemMeta != null) {
-			itemMeta.setDisplayName(displayName);
-			itemMeta.setLore(lore);
+			itemMeta.displayName(displayName != null ? ChatUtils.toLegacyComponent(displayName) : null);
+			itemMeta.lore(toComponents(lore));
 			itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 			item.setItemMeta(itemMeta);
 		}
@@ -80,7 +82,7 @@ public class SCComponentImpl extends SCComponent {
 		public Builder withDisplayName(@Nullable String displayName) {
 			ItemMeta itemMeta = component.getItemMeta();
 			if (itemMeta != null) {
-				itemMeta.setDisplayName(displayName);
+				itemMeta.displayName(displayName != null ? ChatUtils.toLegacyComponent(displayName) : null);
 				component.setItemMeta(itemMeta);
 			}
 			return this;
@@ -107,10 +109,18 @@ public class SCComponentImpl extends SCComponent {
 		public SCComponent build() {
 			ItemMeta itemMeta = component.getItemMeta();
 			if (itemMeta != null) {
-				itemMeta.setLore(lore);
+				itemMeta.lore(toComponents(lore));
 				component.setItemMeta(itemMeta);
 			}
 			return component;
 		}
+	}
+
+	private static @Nullable List<Component> toComponents(@Nullable List<String> lore) {
+		if (lore == null) {
+			return null;
+		}
+
+		return lore.stream().map(ChatUtils::toLegacyComponent).toList();
 	}
 }

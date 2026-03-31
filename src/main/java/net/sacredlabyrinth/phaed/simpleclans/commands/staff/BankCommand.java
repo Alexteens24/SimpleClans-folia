@@ -14,9 +14,9 @@ import net.sacredlabyrinth.phaed.simpleclans.utils.CurrencyFormat;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import static net.md_5.bungee.api.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
 
 @CommandAlias("%clan")
 @Conditions("%basic_conditions")
@@ -52,6 +52,9 @@ public class BankCommand extends BaseCommand {
                 break;
             case NOT_ENOUGH_BALANCE:
                 sender.sendMessage(RED + lang("clan.admin.bank.not.enough.money", sender, clan.getName()));
+                break;
+            case CANCELLED:
+            case NEGATIVE_VALUE:
                 break;
         }
     }

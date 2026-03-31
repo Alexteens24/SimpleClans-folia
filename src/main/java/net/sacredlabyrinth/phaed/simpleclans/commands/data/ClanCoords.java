@@ -13,8 +13,8 @@ import java.util.TreeMap;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.WHITE;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.WHITE;
 
 public class ClanCoords extends Sendable {
 

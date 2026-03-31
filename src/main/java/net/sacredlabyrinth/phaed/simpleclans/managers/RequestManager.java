@@ -7,23 +7,23 @@ import net.sacredlabyrinth.phaed.simpleclans.events.WarEndEvent;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 /**
  * @author phaed
  */
 public final class RequestManager {
     private final SimpleClans plugin;
-    private final HashMap<String, Request> requests = new HashMap<>();
+    private final Map<String, Request> requests = new ConcurrentHashMap<>();
 
     /**
      *
@@ -442,26 +442,23 @@ public final class RequestManager {
      * Starts the task that asks for the votes of all requests
      */
     public void askerTask() {
-        new BukkitRunnable() {
+        plugin.getFoliaScheduler().runGlobalTimer(task -> {
+            for (Map.Entry<String, Request> entry : requests.entrySet()) {
+                Request req = entry.getValue();
 
-            @Override
-            public void run() {
-                for (Iterator<Map.Entry<String, Request>> iter = requests.entrySet().iterator(); iter.hasNext(); ) {
-                    Request req = iter.next().getValue();
-
-                    if (req == null) {
-                        continue;
-                    }
-
-                    if (req.reachedRequestLimit()) {
-                        iter.remove();
-                    }
-
-                    ask(req);
-                    req.incrementAskCount();
+                if (req == null) {
+                    continue;
                 }
+
+                if (req.reachedRequestLimit()) {
+                    requests.remove(entry.getKey(), req);
+                    continue;
+                }
+
+                ask(req);
+                req.incrementAskCount();
             }
-        }.runTaskTimerAsynchronously(plugin, 0, plugin.getSettingsManager().getSeconds(REQUEST_FREQUENCY));
+        }, 0L, plugin.getSettingsManager().getSeconds(REQUEST_FREQUENCY));
     }
 
     /**
@@ -484,10 +481,11 @@ public final class RequestManager {
 
         for (Player recipient : recipients) {
             if (recipient != null) {
-                recipient.spigot().sendMessage(ChatUtils.toBaseComponents(recipient, message));
+                plugin.getFoliaScheduler().runAtEntity(recipient,
+                        () -> recipient.sendMessage(ChatUtils.toComponent(recipient, message)));
             }
         }
 
-        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(new RequestEvent(req)));
+        Bukkit.getPluginManager().callEvent(new RequestEvent(req));
     }
 }

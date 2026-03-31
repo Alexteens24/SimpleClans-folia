@@ -4,12 +4,8 @@ import net.sacredlabyrinth.phaed.simpleclans.ChatBlock;
 import net.sacredlabyrinth.phaed.simpleclans.Clan;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
 import net.sacredlabyrinth.phaed.simpleclans.events.PreCreateClanEvent;
-import net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.conversations.ConversationContext;
-import org.bukkit.conversations.Prompt;
-import org.bukkit.conversations.StringPrompt;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,8 +14,8 @@ import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.conversation.CreateClanTagPrompt.TAG_KEY;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.CLAN_DEFAULT_RANK;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 public class CreateClanNamePrompt extends StringPrompt {
     public static final String NAME_KEY = "name";
@@ -39,7 +35,7 @@ public class CreateClanNamePrompt extends StringPrompt {
 
     @Override
     public @Nullable Prompt acceptInput(@NotNull ConversationContext context, @Nullable String clanName) {
-        SimpleClans plugin = (SimpleClans) context.getPlugin();
+        SimpleClans plugin = context.getPlugin();
         Player player = (Player) context.getForWhom();
         clanName = clanName != null ? clanName : (String) context.getSessionData(NAME_KEY);
         context.setSessionData(NAME_KEY, null);
@@ -49,7 +45,7 @@ public class CreateClanNamePrompt extends StringPrompt {
         if (errorPrompt != null) return errorPrompt;
 
         String finalClanName = clanName;
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        plugin.getFoliaScheduler().runAtEntity(player, () -> {
             String tag = (String) context.getSessionData(TAG_KEY);
             //noinspection ConstantConditions
             PreCreateClanEvent event = new PreCreateClanEvent(player, tag, finalClanName);

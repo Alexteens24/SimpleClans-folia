@@ -33,7 +33,7 @@ import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.conversation.CreateClanNamePrompt.NAME_KEY;
 import static net.sacredlabyrinth.phaed.simpleclans.conversation.CreateClanTagPrompt.TAG_KEY;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.*;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.*;
 
 @CommandAlias("%clan")
 @Conditions("%basic_conditions")

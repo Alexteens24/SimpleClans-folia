@@ -104,7 +104,6 @@ public class GriefPreventionProvider implements ProtectionProvider, Listener {
         return new Land(getIdPrefix() + claim.getID().toString(), Collections.singleton(getOwnerID(claim)), coords);
     }
 
-    @SuppressWarnings("deprecation")
     @NotNull
     private UUID getOwnerID(@NotNull Claim claim) {
         try {

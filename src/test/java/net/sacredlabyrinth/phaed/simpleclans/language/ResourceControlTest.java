@@ -15,10 +15,10 @@ public class ResourceControlTest {
         Locale locale = resourceControl.getFallbackLocale(acfBaseName, Locale.ENGLISH);
         assertNull(locale);
 
-        locale = resourceControl.getFallbackLocale(acfBaseName, new Locale("es", "ES"));
+        locale = resourceControl.getFallbackLocale(acfBaseName, Locale.of("es", "ES"));
         assertEquals(Locale.ENGLISH, locale);
 
-        Locale ptBR = new Locale("pt", "BR");
+        Locale ptBR = Locale.of("pt", "BR");
         resourceControl = new LanguageResource.ResourceControl(ptBR, true);
         locale = resourceControl.getFallbackLocale(acfBaseName, Locale.ENGLISH);
         assertNull(locale);
@@ -41,7 +41,7 @@ public class ResourceControlTest {
         locale = resourceControl.getFallbackLocale(pluginBaseName, Locale.CANADA);
         assertNotSame(Locale.CANADA, locale);
 
-        Locale ptBR = new Locale("pt", "BR");
+        Locale ptBR = Locale.of("pt", "BR");
         resourceControl = new LanguageResource.ResourceControl(ptBR, true);
 
         locale = resourceControl.getFallbackLocale(pluginBaseName, ptBR);

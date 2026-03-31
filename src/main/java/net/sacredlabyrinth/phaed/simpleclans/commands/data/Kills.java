@@ -3,9 +3,8 @@ package net.sacredlabyrinth.phaed.simpleclans.commands.data;
 import net.sacredlabyrinth.phaed.simpleclans.ChatBlock;
 import net.sacredlabyrinth.phaed.simpleclans.Helper;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -27,19 +26,16 @@ public class Kills extends Sendable {
 
     @Override
     public void send() {
-        plugin.getStorageManager().getKillsPerPlayer(polled, data -> new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (data.isEmpty()) {
-                    ChatBlock.sendMessage(player, ChatColor.RED + lang("nokillsfound", player));
-                    return;
-                }
-                configureAndSendHeader();
-                addLines(data);
-
-                sendBlock();
+        plugin.getStorageManager().getKillsPerPlayer(polled, data -> plugin.getFoliaScheduler().runAtEntity(player, () -> {
+            if (data.isEmpty()) {
+                ChatBlock.sendMessage(player, LegacyColor.RED + lang("nokillsfound", player));
+                return;
             }
-        }.runTask(plugin));
+            configureAndSendHeader();
+            addLines(data);
+
+            sendBlock();
+        }));
     }
 
     private void addLines(Map<String, Integer> data) {
@@ -47,7 +43,7 @@ public class Kills extends Sendable {
 
         for (Map.Entry<String, Integer> playerKills : killsPerPlayer.entrySet()) {
             int count = playerKills.getValue();
-            chatBlock.addRow("  " + playerKills.getKey(), ChatColor.AQUA + "" + count);
+            chatBlock.addRow("  " + playerKills.getKey(), LegacyColor.AQUA + "" + count);
         }
     }
 

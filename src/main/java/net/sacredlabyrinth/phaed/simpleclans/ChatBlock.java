@@ -1,7 +1,7 @@
 package net.sacredlabyrinth.phaed.simpleclans;
 
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -381,7 +381,7 @@ public class ChatBlock {
      */
     private static double msgLength(String str) {
         double length = 0;
-        str = ChatColor.stripColor(str);
+        str = LegacyColor.stripColor(str);
 
         // Loop through all the characters, skipping any color characters and their following color codes
 
@@ -626,7 +626,7 @@ public class ChatBlock {
                         x += 1;
 
                         if (x < msg.length()) {
-                            lastColor = ChatColor.COLOR_CHAR + "" + msg.charAt(x);
+                            lastColor = LegacyColor.COLOR_CHAR + "" + msg.charAt(x);
                         }
                     }
                 }

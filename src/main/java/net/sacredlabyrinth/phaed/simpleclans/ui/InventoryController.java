@@ -7,6 +7,7 @@ import net.sacredlabyrinth.phaed.simpleclans.events.ComponentClickEvent;
 import net.sacredlabyrinth.phaed.simpleclans.managers.PermissionsManager;
 import net.sacredlabyrinth.phaed.simpleclans.ui.frames.ConfirmationFrame;
 import net.sacredlabyrinth.phaed.simpleclans.ui.frames.WarningFrame;
+import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -18,7 +19,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -91,7 +91,7 @@ public class InventoryController implements Listener {
 		}
 
 		Runnable finalListener = listener;
-		Bukkit.getScheduler().runTask(SimpleClans.getInstance(), () -> {
+		SimpleClans.getInstance().getFoliaScheduler().runAtEntity((Player) entity, () -> {
 			ItemStack currentItem = event.getCurrentItem();
 			if (currentItem == null) return;
 
@@ -102,7 +102,8 @@ public class InventoryController implements Listener {
 			}
 
 			ItemMeta itemMeta = currentItem.getItemMeta();
-			Objects.requireNonNull(itemMeta).setLore(Collections.singletonList(lang("gui.loading", (Player) entity)));
+			Objects.requireNonNull(itemMeta).lore(Collections.singletonList(
+					ChatUtils.toLegacyComponent(lang("gui.loading", (Player) entity))));
 			currentItem.setItemMeta(itemMeta);
 
 			finalListener.run();
@@ -177,21 +178,17 @@ public class InventoryController implements Listener {
 		SimpleClans plugin = SimpleClans.getInstance();
 		String baseCommand = plugin.getSettingsManager().getString(COMMANDS_CLAN);
 		String finalCommand = String.format("%s %s ", baseCommand, subcommand) + String.join(" ", args);
-		new BukkitRunnable() {
-
-			@Override
-			public void run() {
-				player.performCommand(finalCommand);
-				if (!update) {
-					player.closeInventory();
-				} else {
-					SCFrame currentFrame = frames.get(player.getUniqueId());
-					if (currentFrame instanceof ConfirmationFrame) {
-						currentFrame = currentFrame.getParent();
-					}
-					InventoryDrawer.open(currentFrame);
+		plugin.getFoliaScheduler().runAtEntity(player, () -> {
+			player.performCommand(finalCommand);
+			if (!update) {
+				player.closeInventory();
+			} else {
+				SCFrame currentFrame = frames.get(player.getUniqueId());
+				if (currentFrame instanceof ConfirmationFrame) {
+					currentFrame = currentFrame.getParent();
 				}
+				InventoryDrawer.open(currentFrame);
 			}
-		}.runTask(plugin);
+		});
 	}
 }

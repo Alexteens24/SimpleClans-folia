@@ -5,16 +5,13 @@ import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
 import net.sacredlabyrinth.phaed.simpleclans.events.CreateRankEvent;
 import net.sacredlabyrinth.phaed.simpleclans.events.PreCreateRankEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.conversations.ConversationContext;
-import org.bukkit.conversations.Prompt;
-import org.bukkit.conversations.StringPrompt;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 public class CreateRankNamePrompt extends StringPrompt {
     @Override
@@ -25,7 +22,7 @@ public class CreateRankNamePrompt extends StringPrompt {
 
     @Override
     public @Nullable Prompt acceptInput(@NotNull ConversationContext context, @Nullable String input) {
-        SimpleClans plugin = (SimpleClans) context.getPlugin();
+        SimpleClans plugin = context.getPlugin();
         Player player = (Player) context.getForWhom();
         Clan clan = (Clan) context.getSessionData("clan");
         if (clan == null || plugin == null) return END_OF_CONVERSATION;

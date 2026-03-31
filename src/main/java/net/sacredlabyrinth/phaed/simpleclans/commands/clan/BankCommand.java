@@ -17,8 +17,8 @@ import org.bukkit.entity.Player;
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.events.ClanBalanceUpdateEvent.Cause.COMMAND;
 import static net.sacredlabyrinth.phaed.simpleclans.events.ClanBalanceUpdateEvent.Cause.REVERT;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 @CommandAlias("%clan")
 @Subcommand("%bank")
@@ -62,6 +62,7 @@ public class BankCommand extends BaseCommand {
         /*
             TODO: Remove at SimpleClans 3.0
          */
+        @SuppressWarnings("deprecation")
         BankWithdrawEvent event = new BankWithdrawEvent(player, clan, amount);
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
@@ -79,8 +80,13 @@ public class BankCommand extends BaseCommand {
                 } else {
                     clan.setBalance(operator, REVERT, BankLogger.Operation.WITHDRAW, clan.getBalance() + amount);
                 }
+                break;
             case NOT_ENOUGH_BALANCE:
                 player.sendMessage(lang("clan.bank.not.enough.money", player));
+                break;
+            case CANCELLED:
+            case NEGATIVE_VALUE:
+                break;
         }
     }
 
@@ -112,6 +118,7 @@ public class BankCommand extends BaseCommand {
         /*
             TODO: Remove at SimpleClans 3.0
          */
+        @SuppressWarnings("deprecation")
         BankDepositEvent event = new BankDepositEvent(player, clan, amount);
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {

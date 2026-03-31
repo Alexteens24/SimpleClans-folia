@@ -11,7 +11,7 @@ import net.sacredlabyrinth.phaed.simpleclans.hooks.discord.exceptions.DiscordHoo
 import net.sacredlabyrinth.phaed.simpleclans.managers.*;
 import net.sacredlabyrinth.phaed.simpleclans.utils.CurrencyFormat;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.entity.Player;
 
 import java.util.Objects;
@@ -19,8 +19,8 @@ import java.util.Objects;
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.events.EconomyTransactionEvent.Cause.DISCORD_CREATION;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 @CommandAlias("%clan")
 @Conditions("%basic_conditions|leader")
@@ -156,7 +156,7 @@ public class LeaderCommands extends BaseCommand {
             return;
         }
         if (trustedInput.isTrusted()) {
-            ChatBlock.sendMessage(player, ChatColor.RED + lang("this.player.is.already.trusted", player));
+            ChatBlock.sendMessage(player, LegacyColor.RED + lang("this.player.is.already.trusted", player));
             return;
         }
         clan.addBb(player.getName(), lang("has.been.given.trusted.status.by", trustedInput.getName(),

@@ -2,11 +2,10 @@ package net.sacredlabyrinth.phaed.simpleclans.conversation;
 
 import net.sacredlabyrinth.phaed.simpleclans.Clan;
 import net.sacredlabyrinth.phaed.simpleclans.ClanPlayer;
-import org.bukkit.conversations.Prompt;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 /**
  * @author roinujnosde

@@ -13,7 +13,8 @@ public class Broadcast extends MessageListener {
     @Override
     public void accept(ByteArrayDataInput data) {
         String message = data.readUTF();
-        Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(message));
+        Bukkit.getOnlinePlayers().forEach(player ->
+                bungee.getPlugin().getFoliaScheduler().runAtEntity(player, () -> player.sendMessage(message)));
     }
 
     @Override

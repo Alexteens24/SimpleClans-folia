@@ -47,6 +47,10 @@ public class HomeRegroupEvent extends Event implements Cancellable {
         return Collections.unmodifiableList(cps);
     }
 
+    public Location getLocation() {
+        return loc;
+    }
+
     @Override
     public HandlerList getHandlers() {
         return handlers;

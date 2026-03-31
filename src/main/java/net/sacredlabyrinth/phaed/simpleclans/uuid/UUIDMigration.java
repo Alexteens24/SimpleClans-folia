@@ -37,7 +37,6 @@ public class UUIDMigration {
         			return cp.getUniqueId();
         		}
         	}
-            @SuppressWarnings("deprecation")
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
             return offlinePlayer.getUniqueId();
         }

@@ -2,10 +2,7 @@ package net.sacredlabyrinth.phaed.simpleclans.conversation;
 
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
-import org.bukkit.ChatColor;
-import org.bukkit.conversations.ConversationContext;
-import org.bukkit.conversations.Prompt;
-import org.bukkit.conversations.StringPrompt;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +31,7 @@ public class CreateClanTagPrompt extends StringPrompt {
     @Override
     public @Nullable Prompt acceptInput(@NotNull ConversationContext context, @Nullable String input) {
         Player player = (Player) context.getForWhom();
-        SimpleClans plugin = (SimpleClans) context.getPlugin();
+        SimpleClans plugin = context.getPlugin();
         input = input != null ? input : (String) context.getSessionData(TAG_KEY);
         context.setSessionData(TAG_KEY, null);
         if (input == null || plugin == null) return this;
@@ -49,7 +46,7 @@ public class CreateClanTagPrompt extends StringPrompt {
     private Prompt validateTag(SimpleClans plugin, Player player, @NotNull String clanTag) {
         String cleanTag = ChatUtils.stripColors(clanTag);
         if (plugin.getClanManager().isClan(cleanTag)) {
-            return new MessagePromptImpl(ChatColor.RED +
+            return new MessagePromptImpl(LegacyColor.RED +
                     lang("clan.with.this.tag.already.exists", player), this);
         }
 

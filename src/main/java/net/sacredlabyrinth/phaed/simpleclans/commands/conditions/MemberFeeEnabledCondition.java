@@ -5,7 +5,7 @@ import co.aikar.commands.ConditionContext;
 import co.aikar.commands.ConditionFailedException;
 import co.aikar.commands.InvalidCommandArgument;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.jetbrains.annotations.NotNull;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
@@ -19,7 +19,7 @@ public class MemberFeeEnabledCondition extends AbstractCommandCondition {
     @Override
     public void validateCondition(ConditionContext<BukkitCommandIssuer> context) throws InvalidCommandArgument {
         if (!settingsManager.is(ECONOMY_MEMBER_FEE_ENABLED)) {
-            throw new ConditionFailedException(ChatColor.RED + lang("disabled.command",
+            throw new ConditionFailedException(LegacyColor.RED + lang("disabled.command",
                     context.getIssuer().getIssuer()));
         }
     }

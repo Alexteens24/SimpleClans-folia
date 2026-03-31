@@ -1,6 +1,6 @@
 package net.sacredlabyrinth.phaed.simpleclans.managers;
 
-import io.papermc.lib.PaperLib;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import net.sacredlabyrinth.phaed.simpleclans.*;
 import net.sacredlabyrinth.phaed.simpleclans.events.ClanPlayerTeleportEvent;
 import net.sacredlabyrinth.phaed.simpleclans.utils.VanishUtils;
@@ -13,28 +13,29 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 /**
  * Class responsible for managing teleports and its queue
  */
 public final class TeleportManager {
     private final SimpleClans plugin;
-    private final HashMap<String, TeleportState> waitingPlayers = new HashMap<>();
+    private final ConcurrentHashMap<UUID, TeleportState> waitingPlayers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, ScheduledTask> countdownTasks = new ConcurrentHashMap<>();
 
     public TeleportManager() {
         plugin = SimpleClans.getInstance();
-        startCounter();
     }
 
     /**
@@ -51,10 +52,55 @@ public final class TeleportManager {
         if (pm.has(player, "simpleclans.mod.bypass") || pm.has(player, "simpleclans.vip.teleport-delay")) {
             secs = 0;
         }
-        waitingPlayers.put(player.getUniqueId().toString(), new TeleportState(player, destination, clanName, secs));
+        final int delaySeconds = secs;
+        UUID playerId = player.getUniqueId();
+        TeleportState state = new TeleportState(player, destination.clone(), clanName, delaySeconds);
+        waitingPlayers.put(playerId, state);
 
-        if (secs > 0) {
-            ChatBlock.sendMessage(player, AQUA + lang("waiting.for.teleport.stand.still.for.0.seconds", player, secs));
+        ScheduledTask previousTask = countdownTasks.remove(playerId);
+        if (previousTask != null && !previousTask.isCancelled()) {
+            previousTask.cancel();
+        }
+
+        if (plugin.getFoliaScheduler().runAtEntity(player, () -> {
+            if (waitingPlayers.get(playerId) != state) {
+                return;
+            }
+            sendTeleportBlocks(player, state.getDestination());
+            if (delaySeconds > 0) {
+                ChatBlock.sendMessage(player, AQUA + lang("waiting.for.teleport.stand.still.for.0.seconds", player, delaySeconds));
+                return;
+            }
+            cleanupTeleportState(playerId, state, null);
+            teleport(state);
+        }) == null) {
+            cleanupTeleportState(playerId, state, null);
+            return;
+        }
+
+        if (delaySeconds > 0) {
+            ScheduledTask task = plugin.getFoliaScheduler().runAtEntityTimer(player, scheduledTask -> {
+                if (waitingPlayers.get(playerId) != state) {
+                    cleanupTeleportState(playerId, state, scheduledTask);
+                    return;
+                }
+                if (!isSameBlock(player.getLocation(), state.getLocation())) {
+                    ChatBlock.sendMessage(player, RED + lang("you.moved.teleport.cancelled", player));
+                    cleanupTeleportState(playerId, state, scheduledTask);
+                    return;
+                }
+                if (state.isTeleportTime()) {
+                    cleanupTeleportState(playerId, state, scheduledTask);
+                    teleport(state);
+                } else {
+                    ChatBlock.sendMessage(player, AQUA + "" + state.getCounter());
+                }
+            }, () -> cleanupTeleportState(playerId, state, null), 20L, 20L);
+            if (task == null) {
+                cleanupTeleportState(playerId, state, null);
+                return;
+            }
+            countdownTasks.put(playerId, task);
         }
     }
 
@@ -80,12 +126,21 @@ public final class TeleportManager {
     }
 
     public void teleportToHome(@NotNull Player player, @NotNull Location destination, @NotNull String clanName) {
-        PaperLib.teleportAsync(player, getSafe(destination), PlayerTeleportEvent.TeleportCause.COMMAND).thenAccept(result -> {
-            if (result) {
-                ChatBlock.sendMessage(player, AQUA + lang("now.at.homebase", player, clanName));
-            } else {
-                plugin.getLogger().log(Level.WARNING, "An error occurred while teleporting a player");
-            }
+        plugin.getFoliaScheduler().runRegion(destination, () -> {
+            Location safeDestination = getSafe(destination);
+            player.teleportAsync(safeDestination, PlayerTeleportEvent.TeleportCause.COMMAND).whenComplete((result, throwable) -> {
+                if (throwable != null) {
+                    plugin.getLogger().log(Level.WARNING, "An error occurred while teleporting a player", throwable);
+                    return;
+                }
+                plugin.getFoliaScheduler().runAtEntity(player, () -> {
+                    if (Boolean.TRUE.equals(result)) {
+                        ChatBlock.sendMessage(player, AQUA + lang("now.at.homebase", player, clanName));
+                    } else {
+                        plugin.getLogger().log(Level.WARNING, "An error occurred while teleporting a player");
+                    }
+                });
+            });
         });
     }
 
@@ -108,25 +163,22 @@ public final class TeleportManager {
      * @return the safe Location
      */
     public @NotNull Location getSafe(@NotNull Location location) {
-        int counter = 0;
-        while (counter < 256) { //max world height
-            counter++;
-            Block bottom = location.getBlock();
-            Block top = location.add(0, 1, 0).getBlock();
-            if (!isAir(bottom)) {
-                continue;
+        Location safeLocation = location.clone();
+        int minHeight = safeLocation.getWorld().getMinHeight();
+        int maxHeight = safeLocation.getWorld().getMaxHeight() - 1;
+        int startY = Math.max(minHeight, Math.min(maxHeight - 1, safeLocation.getBlockY()));
+
+        for (int currentY = startY; currentY < maxHeight; currentY++) {
+            safeLocation.setY(currentY);
+            Block bottom = safeLocation.getBlock();
+            Block top = safeLocation.clone().add(0, 1, 0).getBlock();
+            if (isAir(bottom) && isAir(top)) {
+                return safeLocation;
             }
-            if (!isAir(top)) {
-                location.add(0, 1, 0); //skips checking the same block again
-                continue;
-            }
-            location.subtract(0, 1, 0); //remove what was added above
-            return location;
         }
 
-        //noinspection ConstantConditions
-        location.setY(location.getWorld().getHighestBlockYAt(location) + 1);
-        return location;
+        safeLocation.setY(Math.min(maxHeight, safeLocation.getWorld().getHighestBlockYAt(safeLocation) + 1));
+        return safeLocation;
     }
 
     private void dropItems(Player player) {
@@ -150,34 +202,6 @@ public final class TeleportManager {
         }
     }
 
-    private void startCounter() {
-        plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            waitingPlayers.values().removeIf(ts -> ts.getPlayer() == null);
-            for (Iterator<TeleportState> iter = waitingPlayers.values().iterator(); iter.hasNext(); ) {
-                TeleportState state = iter.next();
-                Player player = state.getPlayer();
-                if (state.isProcessing() || player == null) {
-                    continue;
-                }
-                state.setProcessing(true);
-
-                if (!isSameBlock(player.getLocation(), state.getLocation())) {
-                    ChatBlock.sendMessage(player, RED + lang("you.moved.teleport.cancelled", player));
-                    iter.remove();
-                    continue;
-                }
-                if (state.isTeleportTime()) {
-                    teleport(state);
-                    iter.remove();
-                } else {
-                    ChatBlock.sendMessage(player, AQUA + "" + state.getCounter());
-                }
-
-                state.setProcessing(false);
-            }
-        }, 0, 20L);
-    }
-
     private void teleport(TeleportState state) {
         Player player = state.getPlayer();
         if (player == null) {
@@ -189,27 +213,25 @@ public final class TeleportManager {
         if (event.isCancelled()) {
             return;
         }
-        Location loc = state.getDestination();
-        sendTeleportBlocks(player, loc);
+        Location loc = state.getDestination().clone();
         dropItems(player);
-        loc.clone().add(.5, .5, .5);
+        loc = loc.add(.5, .5, .5);
         teleportToHome(player, loc, state.getClanName());
     }
 
-    @SuppressWarnings("deprecation")
     private void sendTeleportBlocks(Player player, Location loc) {
         int x = loc.getBlockX();
         int z = loc.getBlockZ();
 
         if (plugin.getSettingsManager().is(TELEPORT_BLOCKS)) {
             player.sendBlockChange(new Location(loc.getWorld(), x + 1, loc.getBlockY() - 1, z + 1),
-                    Material.GLASS, (byte) 0);
+                Material.GLASS.createBlockData());
             player.sendBlockChange(new Location(loc.getWorld(), x - 1, loc.getBlockY() - 1, z - 1),
-                    Material.GLASS, (byte) 0);
+                Material.GLASS.createBlockData());
             player.sendBlockChange(new Location(loc.getWorld(), x + 1, loc.getBlockY() - 1, z - 1),
-                    Material.GLASS, (byte) 0);
+                Material.GLASS.createBlockData());
             player.sendBlockChange(new Location(loc.getWorld(), x - 1, loc.getBlockY() - 1, z + 1),
-                    Material.GLASS, (byte) 0);
+                Material.GLASS.createBlockData());
         }
     }
 
@@ -221,7 +243,6 @@ public final class TeleportManager {
             }
             int x = location.getBlockX();
             int z = location.getBlockZ();
-            sendTeleportBlocks(player, location);
 
             Random r = new Random();
             int xx = r.nextInt(2) - 1;
@@ -251,6 +272,20 @@ public final class TeleportManager {
             }
         }
         return true;
+    }
+
+    private void cleanupTeleportState(@NotNull UUID playerId, @NotNull TeleportState expectedState,
+                                     @Nullable ScheduledTask scheduledTask) {
+        waitingPlayers.remove(playerId, expectedState);
+        if (scheduledTask != null) {
+            scheduledTask.cancel();
+            countdownTasks.remove(playerId, scheduledTask);
+            return;
+        }
+        ScheduledTask activeTask = countdownTasks.remove(playerId);
+        if (activeTask != null && !activeTask.isCancelled()) {
+            activeTask.cancel();
+        }
     }
 
 }

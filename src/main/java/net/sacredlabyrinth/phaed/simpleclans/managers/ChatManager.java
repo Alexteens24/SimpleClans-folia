@@ -64,10 +64,16 @@ public final class ChatManager {
     }
 
     public void processChat(@NotNull SCMessage message) {
+        plugin.getFoliaScheduler().executeGlobal(() -> processChatOnGlobal(message));
+    }
+
+    private void processChatOnGlobal(@NotNull SCMessage message) {
         Clan clan = Objects.requireNonNull(message.getSender().getClan(), "Clan cannot be null");
 
         List<ClanPlayer> receivers = new ArrayList<>();
         switch (message.getChannel()) {
+            case NONE:
+                return;
             case ALLY:
                 if (!plugin.getSettingsManager().is(ALLYCHAT_ENABLE)) {
                     return;

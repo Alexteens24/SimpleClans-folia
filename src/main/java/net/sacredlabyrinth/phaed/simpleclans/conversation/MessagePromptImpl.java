@@ -1,8 +1,5 @@
 package net.sacredlabyrinth.phaed.simpleclans.conversation;
 
-import org.bukkit.conversations.ConversationContext;
-import org.bukkit.conversations.MessagePrompt;
-import org.bukkit.conversations.Prompt;
 import org.jetbrains.annotations.NotNull;
 
 /**

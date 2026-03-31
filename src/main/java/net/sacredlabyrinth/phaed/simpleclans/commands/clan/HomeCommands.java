@@ -17,7 +17,7 @@ import org.bukkit.entity.Player;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.*;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.*;
 
 @CommandAlias("%clan")
 @Conditions("%basic_conditions|verified")
@@ -119,15 +119,16 @@ public class HomeCommands extends BaseCommand {
                 return;
             }
         }
-        PlayerHomeSetEvent homeSetEvent = new PlayerHomeSetEvent(clan, cp, player.getLocation());
+        Location safeHomeLocation = plugin.getTeleportManager().getSafe(player.getLocation());
+        PlayerHomeSetEvent homeSetEvent = new PlayerHomeSetEvent(clan, cp, safeHomeLocation);
         plugin.getServer().getPluginManager().callEvent(homeSetEvent);
 
         if (homeSetEvent.isCancelled() || !cm.purchaseHomeTeleportSet(player)) {
             return;
         }
 
-        clan.setHomeLocation(player.getLocation());
+        clan.setHomeLocation(safeHomeLocation);
         ChatBlock.sendMessage(player, AQUA + lang("hombase.set", player, YELLOW +
-                Helper.toLocationString(player.getLocation())));
+                Helper.toLocationString(safeHomeLocation)));
     }
 }

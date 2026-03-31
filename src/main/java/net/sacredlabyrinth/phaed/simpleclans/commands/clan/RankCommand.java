@@ -13,7 +13,7 @@ import net.sacredlabyrinth.phaed.simpleclans.managers.PermissionsManager;
 import net.sacredlabyrinth.phaed.simpleclans.managers.StorageManager;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.entity.Player;
 
 import java.util.Comparator;
@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Set;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 @CommandAlias("%clan")
 @Subcommand("%rank")
@@ -135,7 +135,7 @@ public class RankCommand extends BaseCommand {
         }
         rank.setDisplayName(displayName);
         storage.updateClan(clan, true);
-        ChatBlock.sendMessage(player, ChatColor.AQUA + lang("rank.displayname.updated", player));
+        ChatBlock.sendMessage(player, LegacyColor.AQUA + lang("rank.displayname.updated", player));
     }
 
     @Subcommand("%setdefault")

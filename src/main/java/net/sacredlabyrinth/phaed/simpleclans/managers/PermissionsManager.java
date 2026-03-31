@@ -8,7 +8,7 @@ import net.sacredlabyrinth.phaed.simpleclans.*;
 import net.sacredlabyrinth.phaed.simpleclans.events.EconomyTransactionEvent;
 import net.sacredlabyrinth.phaed.simpleclans.events.EconomyTransactionEvent.Cause;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
@@ -375,7 +375,7 @@ public final class PermissionsManager {
         }
 
         if (notify && !hasLevel && !hasRankPermission) {
-            ChatBlock.sendMessage(player, ChatColor.RED + MessageFormat.format(lang("you.must.be.0.or.have.the.permission.1.to.use.this", player),
+            ChatBlock.sendMessage(player, LegacyColor.RED + MessageFormat.format(lang("you.must.be.0.or.have.the.permission.1.to.use.this", player),
                     level == PermissionLevel.LEADER ? lang("leader", player) : lang("trusted", player), permission.toString()));
         }
 
@@ -397,7 +397,7 @@ public final class PermissionsManager {
         ClanPlayer clanPlayer = plugin.getClanManager().getClanPlayer(player);
         if (clanPlayer == null) {
             if (notify) {
-                player.sendMessage(ChatColor.RED + lang("not.a.member.of.any.clan", player));
+                player.sendMessage(LegacyColor.RED + lang("not.a.member.of.any.clan", player));
             }
             return false;
         }
@@ -405,7 +405,7 @@ public final class PermissionsManager {
         boolean hasBukkitPermission = has(player, permission.getBukkitPermission());
         if (!hasBukkitPermission) {
             if (notify) {
-                ChatBlock.sendMessage(player, ChatColor.RED + lang("insufficient.permissions", player));
+                ChatBlock.sendMessage(player, LegacyColor.RED + lang("insufficient.permissions", player));
             }
             return false;
         }
@@ -424,7 +424,7 @@ public final class PermissionsManager {
         }
 
         if (notify && !hasLevel && !hasRankPermission) {
-            ChatBlock.sendMessage(player, ChatColor.RED + MessageFormat.format(lang("you.must.be.0.or.have.the.permission.1.to.use.this", player),
+            ChatBlock.sendMessage(player, LegacyColor.RED + MessageFormat.format(lang("you.must.be.0.or.have.the.permission.1.to.use.this", player),
                     permission.getPermissionLevel() == PermissionLevel.LEADER ? lang("leader", player) : lang("trusted", player), permission.toString()));
         }
 

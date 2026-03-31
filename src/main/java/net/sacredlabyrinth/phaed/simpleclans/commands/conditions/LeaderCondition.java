@@ -6,7 +6,7 @@ import co.aikar.commands.ConditionFailedException;
 import co.aikar.commands.InvalidCommandArgument;
 import net.sacredlabyrinth.phaed.simpleclans.Clan;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ public class LeaderCondition extends AbstractCommandCondition {
         Player player = Conditions.assertPlayer(context.getIssuer());
         Clan clan = Conditions.assertClanMember(clanManager, context.getIssuer());
         if (!clan.isLeader(player)) {
-            throw new ConditionFailedException(ChatColor.RED + lang("no.leader.permissions", player));
+            throw new ConditionFailedException(LegacyColor.RED + lang("no.leader.permissions", player));
         }
     }
 

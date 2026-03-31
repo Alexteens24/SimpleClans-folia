@@ -7,14 +7,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-public class PlayerHeadCacheTask extends BukkitRunnable {
+public class PlayerHeadCacheTask implements Runnable {
 
     private final SimpleClans plugin;
 
@@ -27,7 +26,7 @@ public class PlayerHeadCacheTask extends BukkitRunnable {
      */
     public void start() {
         int hour = 3600;
-        this.runTaskTimerAsynchronously(plugin, 0, (hour + 60) * 20);
+        plugin.getFoliaScheduler().runGlobalTimer(task -> run(), 0L, (hour + 60L) * 20L);
     }
 
     @Override
@@ -39,10 +38,6 @@ public class PlayerHeadCacheTask extends BukkitRunnable {
         players.sort(Comparator.comparing(ClanPlayer::getName));
 
         for (ClanPlayer player : players) {
-            if (isCancelled()) {
-                plugin.getLogger().info("Player heads caching task cancelled!");
-                return;
-            }
             ItemStack itemStack = XMaterial.PLAYER_HEAD.parseItem();
             SkullMeta itemMeta = (SkullMeta) Objects.requireNonNull(itemStack).getItemMeta();
             if (itemMeta != null) {

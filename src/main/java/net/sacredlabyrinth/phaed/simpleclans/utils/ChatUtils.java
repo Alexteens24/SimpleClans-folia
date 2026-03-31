@@ -1,8 +1,10 @@
 package net.sacredlabyrinth.phaed.simpleclans.utils;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.*;
-import net.md_5.bungee.api.chat.ComponentBuilder.FormatRetention;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,8 +14,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static net.md_5.bungee.api.ChatColor.COLOR_CHAR;
-import static net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND;
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 
 public class ChatUtils {
@@ -24,22 +24,17 @@ public class ChatUtils {
     private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("&#([0-9A-Fa-f]{6})");
     private static final Pattern STRIP_COLOR_PATTERN = Pattern.compile("[&§][0-9a-fA-Fk-orK-OR]");
     private static final Pattern HEX_STRIP_COLOR_PATTERN = Pattern.compile("([&§]#[0-9A-Fa-f]{6})|([&§][0-9a-fA-Fk-orK-OR])|([&§]x([&§][a-fA-F0-9]){6})");
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
 
     static {
-        try {
-            ChatColor.class.getDeclaredMethod("of", String.class);
-            HEX_COLOR_SUPPORT = true;
-        } catch (NoSuchMethodException e) {
-            HEX_COLOR_SUPPORT = false;
-        }
+        HEX_COLOR_SUPPORT = true;
     }
 
     private ChatUtils() {
     }
 
     public static String getColorByChar(char character) {
-        ChatColor color = ChatColor.getByChar(character);
-        return color != null ? color.toString() : Character.toString(character);
+        return LegacyColor.getByChar(character);
     }
 
     public static String parseColors(@NotNull String text) {
@@ -49,11 +44,11 @@ public class ChatUtils {
             Matcher matcher = HEX_COLOR_PATTERN.matcher(text);
             StringBuffer buffer = new StringBuffer();
             while (matcher.find()) {
-                matcher.appendReplacement(buffer, ChatColor.of("#" + matcher.group(1)).toString());
+                matcher.appendReplacement(buffer, LegacyColor.hexToColor(matcher.group(1)));
             }
             text = matcher.appendTail(buffer).toString();
         }
-        return ChatColor.translateAlternateColorCodes('&', text);
+        return LegacyColor.translateAlternateColorCodes('&', text);
     }
 
     public static String stripColors(String text) {
@@ -85,8 +80,8 @@ public class ChatUtils {
         return "";
     }
 
-    public static BaseComponent[] toBaseComponents(@Nullable CommandSender receiver, @NotNull String text) {
-        ComponentBuilder builder = new ComponentBuilder("");
+    public static @NotNull Component toComponent(@Nullable CommandSender receiver, @NotNull String text) {
+        TextComponent.Builder builder = Component.text();
         ArrayList<String> placeholders = new ArrayList<>();
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(text);
         while (matcher.find()) {
@@ -94,27 +89,32 @@ public class ChatUtils {
         }
         String[] split = PLACEHOLDER_PATTERN.split(text);
         for (int i = 0; i < split.length; i++) {
-            builder.append(split[i]);
+            if (!split[i].isEmpty()) {
+                builder.append(LEGACY_SECTION.deserialize(split[i]));
+            }
             if (i >= placeholders.size()) {
                 continue;
             }
             appendPlaceholder(receiver, builder, placeholders.get(i));
         }
 
-        return builder.create();
+        return builder.build();
     }
 
-    @SuppressWarnings("deprecation")
-    private static void appendPlaceholder(@Nullable CommandSender receiver, ComponentBuilder builder, String placeholder) {
+    public static @NotNull Component toLegacyComponent(@NotNull String text) {
+        return LEGACY_SECTION.deserialize(text);
+    }
+
+    private static void appendPlaceholder(@Nullable CommandSender receiver, TextComponent.Builder builder, String placeholder) {
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(placeholder);
         if (!matcher.find()) {
             return;
         }
         placeholder = matcher.group(2);
-        builder.retain(FormatRetention.FORMATTING).append(lang("clickable." + placeholder, receiver))
-                .event(new ClickEvent(RUN_COMMAND, "/" + placeholder))
-                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(
-                        (lang("hover.click.to." + placeholder, receiver)))));
+        builder.append(LEGACY_SECTION.deserialize(lang("clickable." + placeholder, receiver))
+                .clickEvent(ClickEvent.runCommand("/" + placeholder))
+                .hoverEvent(HoverEvent.showText(LEGACY_SECTION.deserialize(
+                        lang("hover.click.to." + placeholder, receiver)))));
     }
 
     /**
@@ -131,10 +131,10 @@ public class ChatUtils {
         for (int index = length - 1; index > -1; index--) {
             boolean found = false;
             String color = String.valueOf(input.charAt(index));
-            if (ChatColor.ALL_CODES.contains(color)) {
+            if (LegacyColor.ALL_CODES.contains(color)) {
                 if (index - 1 >= 0) {
                     char section = input.charAt(index - 1);
-                    if (section == COLOR_CHAR) {
+                    if (section == LegacyColor.COLOR_CHAR) {
                         index--;
                         result.insert(0, section + color);
                         found = true;
@@ -150,14 +150,14 @@ public class ChatUtils {
     }
 
     public static void applyLastColorToFollowingLines(@NotNull List<String> lines) {
-        if (lines.get(0).isEmpty() || lines.get(0).charAt(0) != COLOR_CHAR) {
-            lines.set(0, ChatColor.WHITE + lines.get(0));
+        if (lines.get(0).isEmpty() || lines.get(0).charAt(0) != LegacyColor.COLOR_CHAR) {
+            lines.set(0, LegacyColor.WHITE + lines.get(0));
         }
         for (int i = 1; i < lines.size(); i++) {
             final String pLine = lines.get(i - 1);
             final String subLine = lines.get(i);
 
-            if (subLine.isEmpty() || subLine.charAt(0) != COLOR_CHAR) {
+            if (subLine.isEmpty() || subLine.charAt(0) != LegacyColor.COLOR_CHAR) {
                 lines.set(i, getLastColors(pLine) + subLine);
             }
         }

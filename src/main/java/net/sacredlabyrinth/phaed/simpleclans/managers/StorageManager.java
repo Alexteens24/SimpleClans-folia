@@ -10,11 +10,10 @@ import net.sacredlabyrinth.phaed.simpleclans.storage.SQLiteCore;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import net.sacredlabyrinth.phaed.simpleclans.utils.YAMLSerializer;
 import net.sacredlabyrinth.phaed.simpleclans.uuid.UUIDFetcher;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +25,7 @@ import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -40,9 +40,9 @@ public final class StorageManager {
 
     private final SimpleClans plugin;
     private DBCore core;
-    private final HashMap<String, ChatBlock> chatBlocks = new HashMap<>();
-    private final Set<Clan> modifiedClans = new HashSet<>();
-    private final Set<ClanPlayer> modifiedClanPlayers = new HashSet<>();
+    private final Map<String, ChatBlock> chatBlocks = new ConcurrentHashMap<>();
+    private final Set<Clan> modifiedClans = ConcurrentHashMap.newKeySet();
+    private final Set<ClanPlayer> modifiedClanPlayers = ConcurrentHashMap.newKeySet();
 
     /**
      *
@@ -152,7 +152,7 @@ public final class StorageManager {
                     core.execute(query);
                 }
             } else {
-                plugin.getServer().getConsoleSender().sendMessage("[SimpleClans] " + ChatColor.RED + lang("mysql.connection.failed"));
+                plugin.getServer().getConsoleSender().sendMessage("[SimpleClans] " + LegacyColor.RED + lang("mysql.connection.failed"));
             }
         } else {
             core = new SQLiteCore(plugin.getDataFolder().getPath());
@@ -230,7 +230,7 @@ public final class StorageManager {
                     core.execute(query);
                 }
             } else {
-                plugin.getServer().getConsoleSender().sendMessage("[SimpleClans] " + ChatColor.RED + lang("sqlite.connection.failed"));
+                plugin.getServer().getConsoleSender().sendMessage("[SimpleClans] " + LegacyColor.RED + lang("sqlite.connection.failed"));
             }
         }
     }
@@ -706,7 +706,7 @@ public final class StorageManager {
         							+ Helper.escapeQuotes(clan.getPackedAllies()) + "','"
         							+ Helper.escapeQuotes(clan.getPackedRivals()) + "','"
         							+ Helper.escapeQuotes(clan.getPackedBb()) + "','"
-        							+ Helper.escapeQuotes(clan.getCapeUrl()) + "','"
+                                    + Helper.escapeQuotes(clan.getRawCapeUrl()) + "','"
         							+ Helper.escapeQuotes(clan.getFlags()) + "','"
         							+ Helper.escapeQuotes(String.valueOf(clan.getBalance())) + "');";
         core.executeUpdate(query + values);
@@ -718,12 +718,7 @@ public final class StorageManager {
      */
     @Deprecated
     public void updateClanAsync(final Clan clan) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                updateClan(clan);
-            }
-        }.runTaskAsynchronously(plugin);
+        plugin.getFoliaScheduler().runAsync(() -> updateClan(clan));
     }
 
     /**
@@ -732,12 +727,7 @@ public final class StorageManager {
      * @param cp to update
      */
     public void updatePlayerNameAsync(final @NotNull ClanPlayer cp) {
-    	new BukkitRunnable() {
-			@Override
-			public void run() {
-                updatePlayerName(cp);
-			}
-		}.runTaskAsynchronously(plugin);
+        plugin.getFoliaScheduler().runAsync(() -> updatePlayerName(cp));
     }
 
     /**
@@ -843,12 +833,7 @@ public final class StorageManager {
      */
     @Deprecated
     public void updateClanPlayerAsync(final ClanPlayer cp) {
-    	new BukkitRunnable() {
-			@Override
-			public void run() {
-                updateClanPlayer(cp);
-			}
-		}.runTaskAsynchronously(plugin);
+        plugin.getFoliaScheduler().runAsync(() -> updateClanPlayer(cp));
     }
 
     /**
@@ -1032,13 +1017,10 @@ public final class StorageManager {
      * @param callback the callback
      */
     public void getMostKilled(DataCallback<Map<String, Integer>> callback) {
-    	new BukkitRunnable() {
-
-			@Override
-			public void run() {
-				callback.onResultReady(getMostKilled());
-			}
-		}.runTaskAsynchronously(plugin);
+        plugin.getFoliaScheduler().runAsync(() -> {
+            Map<String, Integer> data = getMostKilled();
+            plugin.getFoliaScheduler().executeGlobal(() -> callback.onResultReady(data));
+        });
     }
 
     /**
@@ -1046,12 +1028,10 @@ public final class StorageManager {
      *
      */
     public void getKillsPerPlayer(final String playerName, final DataCallback<Map<String, Integer>> callback) {
-    	new BukkitRunnable() {
-			@Override
-			public void run() {
-				callback.onResultReady(getKillsPerPlayer(playerName));
-			}
-		}.runTaskAsynchronously(plugin);
+        plugin.getFoliaScheduler().runAsync(() -> {
+            Map<String, Integer> data = getKillsPerPlayer(playerName);
+            plugin.getFoliaScheduler().executeGlobal(() -> callback.onResultReady(data));
+        });
     }
 
     /**

@@ -12,7 +12,7 @@ import java.util.UUID;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.*;
-import static org.bukkit.ChatColor.*;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.*;
 
 public class Lookup extends Sendable {
 

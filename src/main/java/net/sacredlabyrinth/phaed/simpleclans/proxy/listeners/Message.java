@@ -18,7 +18,7 @@ public class Message extends MessageListener {
 
         Player player = Bukkit.getPlayerExact(target);
         if (player != null) {
-            player.sendMessage(message);
+            bungee.getPlugin().getFoliaScheduler().runAtEntity(player, () -> player.sendMessage(message));
         }
     }
 

@@ -4,7 +4,6 @@ import net.sacredlabyrinth.phaed.simpleclans.ChatBlock;
 import net.sacredlabyrinth.phaed.simpleclans.Helper;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -12,7 +11,7 @@ import java.util.Map;
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.PAGE_SEPARATOR;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.SERVER_NAME;
-import static org.bukkit.ChatColor.*;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.*;
 
 public class MostKilled extends Sendable {
 
@@ -25,25 +24,22 @@ public class MostKilled extends Sendable {
 
     @Override
     public void send() {
-        plugin.getStorageManager().getMostKilled(data -> new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (data.isEmpty()) {
-                    ChatBlock.sendMessage(player, RED + lang("nokillsfound", player));
-                    return;
-                }
-
-                sendHeader();
-
-                Map<String, Integer> killsPerPlayer = Helper.sortByValue(data);
-
-                for (Map.Entry<String, Integer> attackerVictim : killsPerPlayer.entrySet()) {
-                    addLine(attackerVictim);
-                }
-
-                sendBlock();
+        plugin.getStorageManager().getMostKilled(data -> plugin.getFoliaScheduler().runAtEntity(player, () -> {
+            if (data.isEmpty()) {
+                ChatBlock.sendMessage(player, RED + lang("nokillsfound", player));
+                return;
             }
-        }.runTask(plugin));
+
+            sendHeader();
+
+            Map<String, Integer> killsPerPlayer = Helper.sortByValue(data);
+
+            for (Map.Entry<String, Integer> attackerVictim : killsPerPlayer.entrySet()) {
+                addLine(attackerVictim);
+            }
+
+            sendBlock();
+        }));
     }
 
     private void addLine(Map.Entry<String, Integer> attackerVictim) {

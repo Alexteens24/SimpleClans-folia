@@ -12,8 +12,8 @@ import java.util.List;
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.PAGE_SEPARATOR;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.SERVER_NAME;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.DARK_GRAY;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.DARK_GRAY;
 
 public class Alliances extends Sendable {
 

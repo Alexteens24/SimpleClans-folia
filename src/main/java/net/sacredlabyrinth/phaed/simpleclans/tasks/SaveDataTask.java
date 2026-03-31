@@ -1,7 +1,6 @@
 package net.sacredlabyrinth.phaed.simpleclans.tasks;
 
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.PERFORMANCE_SAVE_INTERVAL;
 
@@ -11,15 +10,15 @@ import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.Con
  * @since 2.10.2
  *
  */
-public class SaveDataTask extends BukkitRunnable {
-	SimpleClans plugin = SimpleClans.getInstance();
+public class SaveDataTask implements Runnable {
+	private final SimpleClans plugin = SimpleClans.getInstance();
 
     /**
      * Starts the repetitive task
      */
 	public void start() {
 		long interval = plugin.getSettingsManager().getMinutes(PERFORMANCE_SAVE_INTERVAL);
-		runTaskTimerAsynchronously(plugin, interval, interval);
+		plugin.getFoliaScheduler().runAsyncTimer(task -> run(), interval, interval);
 	}
 
 	@Override

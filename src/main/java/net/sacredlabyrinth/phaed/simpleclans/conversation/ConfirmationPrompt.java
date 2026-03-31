@@ -4,9 +4,6 @@ import net.sacredlabyrinth.phaed.simpleclans.Clan;
 import net.sacredlabyrinth.phaed.simpleclans.ClanPlayer;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
 import net.sacredlabyrinth.phaed.simpleclans.managers.ClanManager;
-import org.bukkit.conversations.ConversationContext;
-import org.bukkit.conversations.Prompt;
-import org.bukkit.conversations.StringPrompt;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 abstract public class ConfirmationPrompt extends StringPrompt {
 
@@ -41,7 +38,7 @@ abstract public class ConfirmationPrompt extends StringPrompt {
 
     @Override
     public Prompt acceptInput(@NotNull ConversationContext cc, @Nullable String input) {
-        final SimpleClans plugin = (SimpleClans) cc.getPlugin();
+        final SimpleClans plugin = cc.getPlugin();
 
         Player player = (Player) cc.getForWhom();
         String yes = lang("yes", player);

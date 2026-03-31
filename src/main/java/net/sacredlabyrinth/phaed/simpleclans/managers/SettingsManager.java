@@ -127,10 +127,10 @@ public final class SettingsManager {
         String[] split = language.split("_");
 
         if (split.length == 2) {
-            return new Locale(split[0], split[1]);
+            return Locale.of(split[0], split[1]);
         }
 
-        return new Locale(language);
+        return Locale.of(language);
     }
 
     public List<Material> getItemList() {

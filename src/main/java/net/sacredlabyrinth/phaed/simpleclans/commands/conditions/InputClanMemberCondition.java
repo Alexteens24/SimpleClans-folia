@@ -6,7 +6,7 @@ import net.sacredlabyrinth.phaed.simpleclans.commands.ClanPlayerInput;
 import org.jetbrains.annotations.NotNull;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 public class InputClanMemberCondition extends AbstractParameterCondition<ClanPlayerInput> {
     public InputClanMemberCondition(@NotNull SimpleClans plugin) {

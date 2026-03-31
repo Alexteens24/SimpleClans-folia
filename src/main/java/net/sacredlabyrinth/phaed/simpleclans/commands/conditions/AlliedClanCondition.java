@@ -7,7 +7,7 @@ import net.sacredlabyrinth.phaed.simpleclans.commands.ClanInput;
 import org.jetbrains.annotations.NotNull;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 @SuppressWarnings("unused")
 public class AlliedClanCondition extends AbstractParameterCondition<ClanInput> {

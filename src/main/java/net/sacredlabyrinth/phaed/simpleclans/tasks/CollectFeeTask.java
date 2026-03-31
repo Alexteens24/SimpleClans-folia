@@ -7,19 +7,18 @@ import net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager;
 import net.sacredlabyrinth.phaed.simpleclans.utils.CurrencyFormat;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.events.ClanBalanceUpdateEvent.Cause;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.TASKS_COLLECT_FEE_HOUR;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.TASKS_COLLECT_FEE_MINUTE;
-import static org.bukkit.ChatColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
 
 /**
  *
  * @author roinujnosde
  */
-public class CollectFeeTask extends BukkitRunnable {
+public class CollectFeeTask implements Runnable {
 	private final SimpleClans plugin;
     
 	public CollectFeeTask() {
@@ -36,7 +35,7 @@ public class CollectFeeTask extends BukkitRunnable {
     	int minute = sm.getInt(TASKS_COLLECT_FEE_MINUTE);
         long delay = Helper.getDelayTo(hour, minute);
         
-        this.runTaskTimer(plugin, delay * 20, 86400 * 20);
+        plugin.getFoliaScheduler().runGlobalTimer(task -> run(), delay * 20L, 86400L * 20L);
     }
     
     /**

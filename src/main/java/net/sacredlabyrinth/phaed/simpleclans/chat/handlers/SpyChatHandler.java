@@ -6,10 +6,10 @@ import net.sacredlabyrinth.phaed.simpleclans.chat.ChatHandler;
 import net.sacredlabyrinth.phaed.simpleclans.chat.SCMessage;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static net.sacredlabyrinth.phaed.simpleclans.chat.SCMessage.Source;
@@ -30,26 +30,29 @@ public class SpyChatHandler implements ChatHandler {
         message.setContent(ChatUtils.stripColors(message.getContent()));
         String formattedMessage = chatManager.parseChatFormat(format, message);
 
-        List<ClanPlayer> onlineSpies = getOnlineSpies();
+        Set<UUID> directReceivers = message.getReceivers().stream()
+                .map(ClanPlayer::getUniqueId)
+                .collect(Collectors.toSet());
 
-        // Don't send a duplicate message if a spy is inside the clan
-        onlineSpies.removeAll(message.getReceivers());
-        onlineSpies.forEach(receiver -> ChatBlock.sendMessage(receiver, formattedMessage));
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            plugin.getFoliaScheduler().runAtEntity(player, () -> {
+                if (!permissionsManager.has(player, "simpleclans.admin.all-seeing-eye")) {
+                    return;
+                }
+
+                ClanPlayer clanPlayer = plugin.getClanManager().getCreateClanPlayer(player.getUniqueId());
+                if (clanPlayer == null || clanPlayer.isMuted() || directReceivers.contains(clanPlayer.getUniqueId())) {
+                    return;
+                }
+
+                ChatBlock.sendMessage(clanPlayer, formattedMessage);
+            });
+        }
     }
 
     @Override
     public boolean canHandle(SCMessage.Source source) {
         return source == SPIGOT || (source == PROXY && settingsManager.is(PERFORMANCE_USE_BUNGEECORD))
                 || (source == DISCORD && chatManager.isDiscordHookEnabled());
-    }
-
-    private List<ClanPlayer> getOnlineSpies() {
-        return new ArrayList<>(Bukkit.getOnlinePlayers()).stream().
-                filter(Objects::nonNull).
-                filter(player -> permissionsManager.has(player, "simpleclans.admin.all-seeing-eye")).
-                map(player -> plugin.getClanManager().getCreateClanPlayer(player.getUniqueId())).
-                filter(Objects::nonNull).
-                filter(clanPlayer -> !clanPlayer.isMuted()).
-                collect(Collectors.toList());
     }
 }

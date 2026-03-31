@@ -151,9 +151,9 @@ public class LanguageResource {
             String[] extensionSplit = name.split(".properties");
             String[] split = extensionSplit[0].split("_");
             if (split.length == 2) {
-                locale = new Locale(split[1]);
+                locale = Locale.of(split[1]);
             } else {
-                locale = new Locale(split[1], split[2]);
+                locale = Locale.of(split[1], split[2]);
             }
         }
         return locale;

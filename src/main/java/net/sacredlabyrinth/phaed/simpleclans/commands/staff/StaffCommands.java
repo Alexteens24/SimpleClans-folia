@@ -17,7 +17,7 @@ import net.sacredlabyrinth.phaed.simpleclans.managers.StorageManager;
 import net.sacredlabyrinth.phaed.simpleclans.ui.InventoryController;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -28,8 +28,8 @@ import java.util.UUID;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.GLOBAL_FRIENDLY_FIRE;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 @CommandAlias("%clan")
 @Conditions("%basic_conditions")
@@ -144,7 +144,7 @@ public class StaffCommands extends BaseCommand {
 
         clan.setHomeLocation(loc);
         ChatBlock.sendMessage(player, AQUA + lang("hombase.mod.set", player, clan.getName()) + " " +
-                ChatColor.YELLOW + Helper.toLocationString(loc));
+                LegacyColor.YELLOW + Helper.toLocationString(loc));
     }
 
     @Subcommand("%mod %home %tp")

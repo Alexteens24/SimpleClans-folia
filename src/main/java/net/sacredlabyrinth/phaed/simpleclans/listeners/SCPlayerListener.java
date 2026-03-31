@@ -1,11 +1,14 @@
 package net.sacredlabyrinth.phaed.simpleclans.listeners;
 
+import io.papermc.paper.chat.ChatRenderer;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import net.sacredlabyrinth.phaed.simpleclans.*;
 import net.sacredlabyrinth.phaed.simpleclans.ClanPlayer.Channel;
 import net.sacredlabyrinth.phaed.simpleclans.managers.PermissionsManager;
 import net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -50,31 +53,24 @@ public class SCPlayerListener extends SCListener {
     }
 
     @EventHandler(priority = EventPriority.HIGH)
-    public void handleChatTags(AsyncPlayerChatEvent event) {
+    public void handleChatTags(AsyncChatEvent event) {
         Player player = event.getPlayer();
         if (isBlacklistedWorld(player)) {
             return;
         }
 
-        ClanPlayer cp = plugin.getClanManager().getAnyClanPlayer(player.getUniqueId());
-        String tagLabel = cp != null && cp.isTagEnabled() ? cp.getTagLabel() : null;
         if (settingsManager.is(CHAT_COMPATIBILITY_MODE) && settingsManager.is(DISPLAY_CHAT_TAGS)) {
-            if (tagLabel != null) {
-                if (player.getDisplayName().contains("{clan}")) {
-                    player.setDisplayName(player.getDisplayName().replace("{clan}", tagLabel));
-                } else if (event.getFormat().contains("{clan}")) {
-                    event.setFormat(event.getFormat().replace("{clan}", tagLabel));
-                } else {
-                    String format = event.getFormat();
-                    event.setFormat(tagLabel + format);
-                }
-            } else {
-                event.setFormat(event.getFormat().replace("{clan}", ""));
-                event.setFormat(event.getFormat().replace("tagLabel", ""));
+            ClanPlayer cp = plugin.getClanManager().getAnyClanPlayer(player.getUniqueId());
+            if (cp != null && cp.isTagEnabled() && cp.getClan() != null) {
+                Component displayName = plugin.getClanManager().getPlayerDisplayNameComponent(player);
+                ChatRenderer renderer = event.renderer();
+                event.renderer((source, sourceDisplayName, message, viewer) ->
+                        renderer.render(source, displayName, message, viewer));
             }
-        } else {
-            plugin.getClanManager().updateDisplayName(player);
+            return;
         }
+
+        plugin.getFoliaScheduler().runAtEntity(player, () -> plugin.getClanManager().updateDisplayName(player));
     }
 
     @EventHandler
@@ -110,7 +106,7 @@ public class SCPlayerListener extends SCListener {
         if (clan != null && (home = clan.getHomeLocation()) != null) {
             String homeServer = new Flags(clan.getFlags()).getString("homeServer", "");
             if (homeServer.isEmpty() || plugin.getProxyManager().getServerName().equals(homeServer)) {
-                event.setRespawnLocation(plugin.getTeleportManager().getSafe(home));
+                event.setRespawnLocation(home.clone());
             }
         }
     }
@@ -120,12 +116,12 @@ public class SCPlayerListener extends SCListener {
         ClanPlayer cp = plugin.getClanManager().getClanPlayer(event.getPlayer());
         if (cp != null) {
             Clan clan = Objects.requireNonNull(cp.getClan());
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            plugin.getFoliaScheduler().runGlobalLater(() -> {
                 if (clan.getOnlineMembers().isEmpty()) {
                     plugin.getProtectionManager().setWarExpirationTime(cp.getClan(),
                             settingsManager.getMinutes(WAR_DISCONNECT_EXPIRATION_TIME));
                 }
-            });
+            }, 1L);
         }
         if (isBlacklistedWorld(event.getPlayer())) {
             return;
@@ -148,29 +144,47 @@ public class SCPlayerListener extends SCListener {
 
     private void registerChatListener() {
         EventPriority priority = EventPriority.valueOf(settingsManager.getString(CLANCHAT_LISTENER_PRIORITY));
-        plugin.getServer().getPluginManager().registerEvent(AsyncPlayerChatEvent.class, this, priority, (l, e) -> {
-            if (!(e instanceof AsyncPlayerChatEvent)) {
+        plugin.getServer().getPluginManager().registerEvent(AsyncChatEvent.class, this, priority, (l, e) -> {
+            if (!(e instanceof AsyncChatEvent)) {
                 return;
             }
-            AsyncPlayerChatEvent event = (AsyncPlayerChatEvent) e;
+            AsyncChatEvent event = (AsyncChatEvent) e;
             Player player = event.getPlayer();
             ClanPlayer cp = plugin.getClanManager().getClanPlayer(player.getUniqueId());
-            if (cp == null || isBlacklistedWorld(player)) {
+            if (cp == null) {
                 return;
             }
 
             Channel channel = cp.getChannel();
-            if (channel != NONE) {
-                PermissionsManager pm = plugin.getPermissionsManager();
-                if ((channel == Channel.ALLY && !pm.has(player, "simpleclans.member.ally")) ||
-                        (channel == CLAN && !pm.has(player, "simpleclans.member.chat"))) {
-                    ChatBlock.sendMessage(player, ChatColor.RED + lang("insufficient.permissions", player));
-                    return;
-                }
-                plugin.getChatManager().processChat(SPIGOT, channel, cp, event.getMessage());
-                event.setCancelled(true);
+            if (channel == NONE) {
+                return;
             }
+
+            event.setCancelled(true);
+            String message = PlainTextComponentSerializer.plainText().serialize(event.message());
+            plugin.getFoliaScheduler().runAtEntity(player, () -> handleClanChannelMessage(player, message));
         }, plugin, true);
+    }
+
+    private void handleClanChannelMessage(@NotNull Player player, @NotNull String message) {
+        ClanPlayer cp = plugin.getClanManager().getClanPlayer(player.getUniqueId());
+        if (cp == null || isBlacklistedWorld(player)) {
+            return;
+        }
+
+        Channel channel = cp.getChannel();
+        if (channel == NONE) {
+            return;
+        }
+
+        PermissionsManager pm = plugin.getPermissionsManager();
+        if ((channel == Channel.ALLY && !pm.has(player, "simpleclans.member.ally")) ||
+                (channel == CLAN && !pm.has(player, "simpleclans.member.chat"))) {
+            ChatBlock.sendMessage(player, LegacyColor.RED + lang("insufficient.permissions", player));
+            return;
+        }
+
+        plugin.getChatManager().processChat(SPIGOT, channel, cp, message);
     }
 
     private void updatePlayerName(@NotNull final Player player) {

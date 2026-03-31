@@ -1,9 +1,6 @@
 package net.sacredlabyrinth.phaed.simpleclans.conversation;
 
 import org.bukkit.command.CommandSender;
-import org.bukkit.conversations.Conversation;
-import org.bukkit.conversations.ConversationCanceller;
-import org.bukkit.conversations.ConversationContext;
 import org.jetbrains.annotations.NotNull;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
@@ -25,24 +22,12 @@ public class RequestCanceller implements ConversationCanceller {
     }
 
     @Override
-    public void setConversation(@NotNull Conversation conversation) {
-    }
-
-    @Override
     public boolean cancelBasedOnInput(@NotNull ConversationContext context, @NotNull String input) {
         if (input.equalsIgnoreCase(escapeSequence)) {
-            context.getForWhom().sendRawMessage(cancelledMessage);
+            context.getForWhom().sendMessage(cancelledMessage);
             return true;
         }
 
         return false;
-    }
-
-    //a clone that is not a clone, nice one, Bukkit
-    @SuppressWarnings("MethodDoesntCallSuperMethod")
-    @NotNull
-    @Override
-    public ConversationCanceller clone() {
-        return new RequestCanceller(this.escapeSequence, this.cancelledMessage);
     }
 }

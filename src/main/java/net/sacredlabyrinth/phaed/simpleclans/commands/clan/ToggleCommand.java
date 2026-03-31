@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 import java.util.function.Consumer;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
-import static org.bukkit.ChatColor.AQUA;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.AQUA;
 
 @CommandAlias("%clan")
 @Subcommand("%toggle")

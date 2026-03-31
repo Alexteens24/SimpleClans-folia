@@ -4,7 +4,10 @@ import net.sacredlabyrinth.phaed.simpleclans.RankPermission;
 import net.sacredlabyrinth.phaed.simpleclans.SimpleClans;
 import net.sacredlabyrinth.phaed.simpleclans.events.FrameOpenEvent;
 import net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager;
+import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
 import net.sacredlabyrinth.phaed.simpleclans.utils.WordWrapper;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -31,33 +34,32 @@ public class InventoryDrawer {
             return;
         }
         UUID uuid = frame.getViewer().getUniqueId();
-        if (frame.equals(OPENING.get(uuid))) {
-            return;
-        }
+        plugin.getFoliaScheduler().runAtEntity(frame.getViewer(), () -> {
+            if (frame.equals(OPENING.get(uuid))) {
+                return;
+            }
 
-	FrameOpenEvent event = new FrameOpenEvent(frame.getViewer(), frame);
-        Bukkit.getPluginManager().callEvent(event);
-        if (event.isCancelled()) {
-            return;
-	}
-	OPENING.put(uuid, frame);
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+	    FrameOpenEvent event = new FrameOpenEvent(frame.getViewer(), frame);
+            Bukkit.getPluginManager().callEvent(event);
+            if (event.isCancelled()) {
+                return;
+	    }
+	    OPENING.put(uuid, frame);
 	    Inventory inventory = prepareInventory(frame);
 
             if (!frame.equals(OPENING.get(uuid))) {
                 return;
             }
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                frame.getViewer().openInventory(inventory);
-                InventoryController.register(frame);
-                OPENING.remove(uuid);
-            });
+            frame.getViewer().openInventory(inventory);
+            InventoryController.register(frame);
+            OPENING.remove(uuid);
         });
     }
 
     @NotNull
     private static Inventory prepareInventory(@NotNull SCFrame frame) {
-        Inventory inventory = Bukkit.createInventory(frame.getViewer(), frame.getSize(), frame.getTitle());
+        Inventory inventory = Bukkit.createInventory(frame.getViewer(), frame.getSize(),
+            ChatUtils.toLegacyComponent(frame.getTitle()));
         long start = System.currentTimeMillis();
         setComponents(inventory, frame);
 
@@ -105,41 +107,41 @@ public class InventoryDrawer {
     private static void processLineBreaks(SCComponent c) {
         ItemMeta itemMeta = c.getItemMeta();
         if (itemMeta != null) {
-            List<String> oldLore = itemMeta.getLore();
+            List<Component> oldLore = itemMeta.lore();
             if (oldLore != null) {
                 ArrayList<String> newLore = new ArrayList<>();
-                for (String line : oldLore) {
+                for (Component lineComponent : oldLore) {
+                    String line = LegacyComponentSerializer.legacySection().serialize(lineComponent);
                     if (line.isEmpty()) {
                         continue;
                     }
                     WordWrapper wrapper = new WordWrapper(line, plugin.getSettingsManager().getInt(LORE_LENGTH));
                     newLore.addAll(Arrays.asList(wrapper.wrap()));
                 }
-                itemMeta.setLore(newLore);
+                itemMeta.lore(newLore.stream().map(ChatUtils::toLegacyComponent).toList());
                 c.setItemMeta(itemMeta);
             }
         }
     }
 
     private static void runHelpCommand(@NotNull Player player) {
-        Bukkit.getScheduler().runTask(plugin, () -> plugin.getServer().getConsoleSender().sendMessage(lang("gui.not.supported")));
+        plugin.getFoliaScheduler().executeGlobal(() -> plugin.getServer().getConsoleSender().sendMessage(lang("gui.not.supported")));
         SettingsManager settingsManager = plugin.getSettingsManager();
         settingsManager.set(ENABLE_GUI, false);
         String commandClan = settingsManager.getString(COMMANDS_CLAN);
-        player.performCommand(commandClan);
+        plugin.getFoliaScheduler().runAtEntity(player, () -> player.performCommand(commandClan));
     }
 
     private static void checkLorePermission(@NotNull SCFrame frame, @NotNull SCComponent component) {
         ItemMeta itemMeta = component.getItemMeta();
         if (itemMeta != null) {
-            List<String> lore = itemMeta.getLore();
+            List<Component> lore = itemMeta.lore();
             if (lore != null) {
                 Object permission = component.getLorePermission();
                 if (permission != null) {
                     if (!hasPermission(frame.getViewer(), permission)) {
-                        lore.clear();
-                        lore.add(lang("gui.lore.no.permission", frame.getViewer()));
-                        itemMeta.setLore(lore);
+                        itemMeta.lore(Collections.singletonList(ChatUtils.toLegacyComponent(
+                                lang("gui.lore.no.permission", frame.getViewer()))));
                         component.setItemMeta(itemMeta);
                     }
                 }

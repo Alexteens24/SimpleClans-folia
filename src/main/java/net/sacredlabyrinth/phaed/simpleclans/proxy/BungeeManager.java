@@ -21,6 +21,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,12 +60,18 @@ public final class BungeeManager implements ProxyManager, PluginMessageListener 
         }
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, "BungeeCord");
         Bukkit.getMessenger().registerIncomingPluginChannel(plugin, "BungeeCord", this);
-        Bukkit.getScheduler().runTaskTimer(plugin, this::requestPlayerList, 0, 60 * 20);
+        plugin.getFoliaScheduler().runGlobalTimer(task -> requestPlayerList(), 0L, 60L * 20L);
         requestServerName();
     }
 
     @SuppressWarnings("UnstableApiUsage")
     public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte[] data) {
+        byte[] copiedData = Arrays.copyOf(data, data.length);
+        plugin.getFoliaScheduler().executeGlobal(() -> processPluginMessage(copiedData));
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private void processPluginMessage(byte[] data) {
         ByteArrayDataInput dataInput = ByteStreams.newDataInput(data);
         String subChannel = dataInput.readUTF();
         if (unsupportedChannels.contains(subChannel)) {
@@ -153,14 +160,15 @@ public final class BungeeManager implements ProxyManager, PluginMessageListener 
         }
 
         if ("ALL".equals(target)) {
-            Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(message));
+            plugin.getFoliaScheduler().executeGlobal(() -> Bukkit.getOnlinePlayers().forEach(p ->
+                    plugin.getFoliaScheduler().runAtEntity(p, () -> p.sendMessage(message))));
             sendBroadcast(message);
             return;
         }
 
         Player player = Bukkit.getPlayerExact(target);
         if (player != null) {
-            player.sendMessage(message);
+            plugin.getFoliaScheduler().runAtEntity(player, () -> player.sendMessage(message));
             return;
         }
 
@@ -212,7 +220,7 @@ public final class BungeeManager implements ProxyManager, PluginMessageListener 
     }
 
     private void requestServerName() {
-        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+        plugin.getFoliaScheduler().runGlobalTimer(task -> {
             if (!serverName.isEmpty()) {
                 task.cancel();
                 return;
@@ -221,7 +229,8 @@ public final class BungeeManager implements ProxyManager, PluginMessageListener 
                 @SuppressWarnings("UnstableApiUsage")
                 ByteArrayDataOutput output = ByteStreams.newDataOutput();
                 output.writeUTF("GetServer");
-                player.sendPluginMessage(plugin, "BungeeCord", output.toByteArray());
+                plugin.getFoliaScheduler().runAtEntity(player,
+                        () -> player.sendPluginMessage(plugin, "BungeeCord", output.toByteArray()));
             });
         }, 0L, 20L);
     }
@@ -271,8 +280,10 @@ public final class BungeeManager implements ProxyManager, PluginMessageListener 
     }
 
     private void sendOnBungeeChannel(ByteArrayDataOutput output) {
-        Bukkit.getOnlinePlayers().stream().findAny().ifPresent(player ->
-                player.sendPluginMessage(plugin, "BungeeCord", output.toByteArray()));
+        byte[] payload = output.toByteArray();
+        plugin.getFoliaScheduler().executeGlobal(() -> Bukkit.getOnlinePlayers().stream().findAny().ifPresent(player ->
+            plugin.getFoliaScheduler().runAtEntity(player,
+                () -> player.sendPluginMessage(plugin, "BungeeCord", payload))));
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")

@@ -6,7 +6,7 @@ import net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager;
 import net.sacredlabyrinth.phaed.simpleclans.utils.DateFormat;
 import net.sacredlabyrinth.phaed.simpleclans.utils.VanishUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -249,9 +249,9 @@ public class ClanPlayer implements Serializable, Comparable<ClanPlayer> {
         if (days < 1) {
             return lang("today", sender);
         } else if (Math.round(days) == 1) {
-            return lang("1.color.day", sender, ChatColor.GRAY);
+            return lang("1.color.day", sender, LegacyColor.GRAY);
         } else {
-            return lang("many.color.days", sender, Math.round(days), ChatColor.GRAY);
+            return lang("many.color.days", sender, Math.round(days), LegacyColor.GRAY);
         }
     }
 
@@ -869,6 +869,8 @@ public class ClanPlayer implements Serializable, Comparable<ClanPlayer> {
 
     public void mute(Channel channel, boolean b) {
         switch (channel) {
+            case NONE:
+                break;
             case CLAN:
                 clanChatMute = b;
                 break;

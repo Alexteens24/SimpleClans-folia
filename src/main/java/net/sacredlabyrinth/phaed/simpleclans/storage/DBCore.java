@@ -112,7 +112,7 @@ public interface DBCore {
             }
         };
         if (plugin.getSettingsManager().is(ConfigField.PERFORMANCE_USE_THREADS)) {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, executeUpdate);
+            plugin.getFoliaScheduler().runAsync(executeUpdate);
         } else {
             executeUpdate.run();
         }

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.CLAN_MIN_SIZE_TO_SET_RIVAL;
-import static org.bukkit.ChatColor.RED;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.RED;
 
 @SuppressWarnings("unused")
 public class MinimumToRivalCondition extends AbstractCommandCondition {

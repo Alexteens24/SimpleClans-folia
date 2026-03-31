@@ -1,13 +1,12 @@
 package net.sacredlabyrinth.phaed.simpleclans.utils;
 
-import net.md_5.bungee.api.ChatColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import static net.md_5.bungee.api.ChatColor.COLOR_CHAR;
+import static net.sacredlabyrinth.phaed.simpleclans.utils.LegacyColor.COLOR_CHAR;
 import static net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils.applyLastColorToFollowingLines;
 
 public class WordWrapper {
@@ -132,7 +131,7 @@ public class WordWrapper {
             if (c == COLOR_CHAR) {
                 if (i + 1 < input.length()) {
                     String s = String.valueOf(input.charAt(i + 1));
-                    if (ChatColor.ALL_CODES.contains(s)) {
+                    if (LegacyColor.ALL_CODES.contains(s)) {
                         i++;
                         continue;
                     }

@@ -2,6 +2,7 @@ package net.sacredlabyrinth.phaed.simpleclans;
 
 import co.aikar.commands.BukkitCommandIssuer;
 import net.sacredlabyrinth.phaed.simpleclans.commands.SCCommandManager;
+import net.sacredlabyrinth.phaed.simpleclans.conversation.ConversationListener;
 import net.sacredlabyrinth.phaed.simpleclans.hooks.papi.SimpleClansExpansion;
 import net.sacredlabyrinth.phaed.simpleclans.language.LanguageResource;
 import net.sacredlabyrinth.phaed.simpleclans.listeners.*;
@@ -16,6 +17,7 @@ import net.sacredlabyrinth.phaed.simpleclans.proxy.ProxyManager;
 import net.sacredlabyrinth.phaed.simpleclans.tasks.*;
 import net.sacredlabyrinth.phaed.simpleclans.ui.InventoryController;
 import net.sacredlabyrinth.phaed.simpleclans.utils.ChatUtils;
+import net.sacredlabyrinth.phaed.simpleclans.utils.FoliaScheduler;
 import net.sacredlabyrinth.phaed.simpleclans.utils.TagValidator;
 import net.sacredlabyrinth.phaed.simpleclans.utils.UpdateChecker;
 import net.sacredlabyrinth.phaed.simpleclans.uuid.UUIDMigration;
@@ -60,6 +62,7 @@ public class SimpleClans extends JavaPlugin {
     private ProtectionManager protectionManager;
     private ChatManager chatManager;
     private ProxyManager proxyManager;
+    private FoliaScheduler foliaScheduler;
     private boolean hasUUID;
     private static final Pattern ACF_PLACEHOLDER_PATTERN = Pattern.compile("\\{(?<key>[a-zA-Z]+?)}");
 
@@ -102,6 +105,7 @@ public class SimpleClans extends JavaPlugin {
         instance = this;
         new LanguageMigration(this).migrate();
         settingsManager = new SettingsManager(this);
+        foliaScheduler = new FoliaScheduler(this);
         new BbMigration(settingsManager);
         new ChatFormatMigration(settingsManager);
         languageResource = new LanguageResource();
@@ -140,6 +144,7 @@ public class SimpleClans extends JavaPlugin {
 
     private void registerEvents() {
         PluginManager pm = getServer().getPluginManager();
+        pm.registerEvents(new ConversationListener(), this);
         pm.registerEvents(new PlayerDeath(this), this);
         pm.registerEvents(new SCPlayerListener(this), this);
         pm.registerEvents(new InventoryController(), this);
@@ -256,6 +261,10 @@ public class SimpleClans extends JavaPlugin {
 
     public ProxyManager getProxyManager() {
         return proxyManager;
+    }
+
+    public FoliaScheduler getFoliaScheduler() {
+        return foliaScheduler;
     }
 
     public BankLogger getBankLogger() {
