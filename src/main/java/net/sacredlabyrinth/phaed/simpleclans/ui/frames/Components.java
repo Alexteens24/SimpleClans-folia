@@ -187,17 +187,12 @@ public class Components {
         });
     }
 
-    @SuppressWarnings("deprecation")
     public static void setOwningPlayer(@NotNull ItemStack item, @NotNull OfflinePlayer player) {
         SkullMeta itemMeta = (SkullMeta) item.getItemMeta();
-        if (itemMeta == null || player.getName() == null) {
+        if (itemMeta == null) {
             return;
         }
-        try {
-            itemMeta.setOwningPlayer(player);
-        } catch (NoSuchMethodError e) {
-            itemMeta.setOwner(player.getName());
-        }
+        itemMeta.setOwningPlayer(player);
 
         item.setItemMeta(itemMeta);
     }

@@ -34,7 +34,8 @@ public final class FoliaScheduler {
 
     public @NotNull ScheduledTask runGlobalTimer(@NotNull Consumer<ScheduledTask> task, long initialDelayTicks,
                                                  long periodTicks) {
-        return plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin, task, initialDelayTicks, periodTicks);
+        return plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin, task,
+            normalizeFixedRateTicks(initialDelayTicks), normalizeFixedRateTicks(periodTicks));
     }
 
     public void executeRegion(@NotNull Location location, @NotNull Runnable task) {
@@ -61,7 +62,8 @@ public final class FoliaScheduler {
     public @Nullable ScheduledTask runAtEntityTimer(@NotNull Entity entity, @NotNull Consumer<ScheduledTask> task,
                                                     @Nullable Runnable retiredTask, long initialDelayTicks,
                                                     long periodTicks) {
-        return entity.getScheduler().runAtFixedRate(plugin, task, retiredTask, initialDelayTicks, periodTicks);
+        return entity.getScheduler().runAtFixedRate(plugin, task, retiredTask,
+            normalizeFixedRateTicks(initialDelayTicks), normalizeFixedRateTicks(periodTicks));
     }
 
     public boolean executeAtEntity(@NotNull Entity entity, @NotNull Runnable task, @Nullable Runnable retiredTask,
@@ -80,8 +82,8 @@ public final class FoliaScheduler {
 
     public @NotNull ScheduledTask runAsyncTimer(@NotNull Consumer<ScheduledTask> task, long initialDelayTicks,
                                                 long periodTicks) {
-        return plugin.getServer().getAsyncScheduler().runAtFixedRate(plugin, task, ticksToMillis(initialDelayTicks),
-                ticksToMillis(periodTicks), TimeUnit.MILLISECONDS);
+        return plugin.getServer().getAsyncScheduler().runAtFixedRate(plugin, task,
+            ticksToFixedRateMillis(initialDelayTicks), ticksToFixedRateMillis(periodTicks), TimeUnit.MILLISECONDS);
     }
 
     public void cancelAllTasks() {
@@ -91,5 +93,13 @@ public final class FoliaScheduler {
 
     private long ticksToMillis(long ticks) {
         return Math.max(0L, ticks) * TICK_DURATION_MILLIS;
+    }
+
+    private long ticksToFixedRateMillis(long ticks) {
+        return normalizeFixedRateTicks(ticks) * TICK_DURATION_MILLIS;
+    }
+
+    private long normalizeFixedRateTicks(long ticks) {
+        return Math.max(1L, ticks);
     }
 }

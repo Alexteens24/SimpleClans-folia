@@ -203,12 +203,22 @@ public class SimpleClans extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (getSettingsManager().is(PERFORMANCE_SAVE_PERIODICALLY)) {
-            getStorageManager().saveModified();
+        if (foliaScheduler != null) {
+            foliaScheduler.cancelAllTasks();
         }
-        getStorageManager().closeConnection();
-        getPermissionsManager().savePermissions();
-        getSettingsManager().loadAndSave();
+
+        if (settingsManager != null && storageManager != null && settingsManager.is(PERFORMANCE_SAVE_PERIODICALLY)) {
+            storageManager.saveModified();
+        }
+        if (storageManager != null) {
+            storageManager.closeConnection();
+        }
+        if (permissionsManager != null) {
+            permissionsManager.savePermissions();
+        }
+        if (settingsManager != null) {
+            settingsManager.loadAndSave();
+        }
     }
 
     /**
