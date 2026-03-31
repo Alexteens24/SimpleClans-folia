@@ -54,13 +54,13 @@ public class Clan implements Serializable, Comparable<Clan> {
     private long founded;
     private long lastUsed;
     private String capeUrl;
-    private List<String> allies = new ArrayList<>();
-    private List<String> rivals = new ArrayList<>();
-    private List<String> bb = new ArrayList<>();
+    private final List<String> allies = new CopyOnWriteArrayList<>();
+    private final List<String> rivals = new CopyOnWriteArrayList<>();
+    private final List<String> bb = new CopyOnWriteArrayList<>();
     private final List<ClanPlayer> members = new CopyOnWriteArrayList<>();
     private Flags flags = new Flags(null);
     private boolean feeEnabled;
-    private List<Rank> ranks = new ArrayList<>();
+    private final List<Rank> ranks = new CopyOnWriteArrayList<>();
     private @Nullable String defaultRank = null;
     private @Nullable ItemStack banner;
 
@@ -505,7 +505,8 @@ public class Clan implements Serializable, Comparable<Clan> {
     }
 
     public void setBb(List<String> bb) {
-        this.bb = new ArrayList<>(bb);
+        this.bb.clear();
+        this.bb.addAll(bb);
     }
 
     /**
@@ -662,7 +663,8 @@ public class Clan implements Serializable, Comparable<Clan> {
      * @param packedBb the packedBb to set
      */
     public void setPackedBb(String packedBb) {
-        bb = Helper.fromArrayToList(packedBb.split("[|]"));
+        bb.clear();
+        bb.addAll(Helper.fromArrayToList(packedBb.split("[|]")));
     }
 
     /**
@@ -680,7 +682,8 @@ public class Clan implements Serializable, Comparable<Clan> {
      * @param packedAllies the packedAllies to set
      */
     public void setPackedAllies(String packedAllies) {
-        allies = Helper.fromArrayToList(packedAllies.split("[|]"));
+        allies.clear();
+        allies.addAll(Helper.fromArrayToList(packedAllies.split("[|]")));
     }
 
     /**
@@ -698,7 +701,8 @@ public class Clan implements Serializable, Comparable<Clan> {
      * @param packedRivals the packedRivals to set
      */
     public void setPackedRivals(String packedRivals) {
-        rivals = Helper.fromArrayToList(packedRivals.split("[|]"));
+        rivals.clear();
+        rivals.addAll(Helper.fromArrayToList(packedRivals.split("[|]")));
     }
 
     /**
@@ -1671,10 +1675,10 @@ public class Clan implements Serializable, Comparable<Clan> {
      * Sets the clan's ranks
      */
     public void setRanks(@Nullable List<Rank> ranks) {
-        if (ranks == null) {
-            ranks = new ArrayList<>();
+        this.ranks.clear();
+        if (ranks != null) {
+            this.ranks.addAll(ranks);
         }
-        this.ranks = ranks;
     }
 
     /**

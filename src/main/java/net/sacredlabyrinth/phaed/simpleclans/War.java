@@ -3,12 +3,12 @@ package net.sacredlabyrinth.phaed.simpleclans;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class War {
-    private final Map<Clan, Integer> clans = new HashMap<>();
+    private final Map<Clan, Integer> clans = new ConcurrentHashMap<>();
 
     public War(@NotNull Clan clan1, @NotNull Clan clan2) {
         clans.put(clan1, 0);

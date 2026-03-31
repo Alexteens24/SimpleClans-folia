@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,7 +33,7 @@ public class ProtectionManager {
     private final SettingsManager settingsManager;
     private final ClanManager clanManager;
     private final Logger logger;
-    private final Map<War, ScheduledTask> wars = new HashMap<>();
+    private final Map<War, ScheduledTask> wars = new ConcurrentHashMap<>();
     private final List<ProtectionProvider> providers = new ArrayList<>();
     private LandProtection landProtection;
     private final SimpleClans plugin;

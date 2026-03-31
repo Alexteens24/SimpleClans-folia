@@ -22,6 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.COMMANDS_CLAN;
@@ -32,7 +33,7 @@ import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.Con
  *
  */
 public class InventoryController implements Listener {
-	private static final Map<UUID, SCFrame> frames = new HashMap<>();
+	private static final Map<UUID, SCFrame> frames = new ConcurrentHashMap<>();
 
 	@EventHandler(ignoreCancelled = true)
 	public void onClose(InventoryCloseEvent event) {
