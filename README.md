@@ -18,6 +18,25 @@ Full featured clan system for PVP Minecraft Servers!
 
 * [Download from Spigot](https://www.spigotmc.org/resources/simpleclans.71242/)
 
+#### Branch Changes
+
+This repository state is no longer the legacy Spigot/Bukkit baseline.
+
+* Runtime target: Java 21
+* Server target: Paper/Folia 1.21.11 API
+* `plugin.yml` now declares `api-version: '1.21'` and `folia-supported: true`
+* Scheduler usage was migrated to a shared Folia scheduler wrapper for global, region, entity, and async execution
+* Clan chat, request prompts, teleport countdowns, inventory flows, and proxy messaging were updated for Folia-safe execution
+* Legacy Bukkit Conversations were replaced with an internal prompt flow driven by Paper `AsyncChatEvent`
+* Clickable and hover chat output now uses Adventure components instead of legacy Bungee chat components
+* Legacy color handling was centralized in `LegacyColor`, while inventory titles and item meta were updated to modern component-based APIs
+
+#### Compatibility Notes
+
+* This branch should be treated as Folia/Paper-only; legacy Bukkit/Spigot compatibility is not the target anymore
+* If you are updating from an older SimpleClans build, review your server Java version and plugin compatibility before deploying
+* The upstream documentation links below are still useful, but some implementation details may lag behind this branch's Folia migration
+
 #### Documentation 
 
 * [Documentation](https://simpleclans.gitbook.io/simpleclans/)
