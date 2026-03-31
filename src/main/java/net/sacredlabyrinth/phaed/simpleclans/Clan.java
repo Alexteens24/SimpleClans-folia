@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static net.sacredlabyrinth.phaed.simpleclans.EconomyResponse.*;
@@ -56,7 +57,7 @@ public class Clan implements Serializable, Comparable<Clan> {
     private List<String> allies = new ArrayList<>();
     private List<String> rivals = new ArrayList<>();
     private List<String> bb = new ArrayList<>();
-    private final List<ClanPlayer> members = new ArrayList<>();
+    private final List<ClanPlayer> members = new CopyOnWriteArrayList<>();
     private Flags flags = new Flags(null);
     private boolean feeEnabled;
     private List<Rank> ranks = new ArrayList<>();
@@ -540,9 +541,7 @@ public class Clan implements Serializable, Comparable<Clan> {
      * (used internally)
      */
     public void importMember(ClanPlayer cp) {
-        if (!members.contains(cp)) {
-            members.add(cp);
-        }
+        ((CopyOnWriteArrayList<ClanPlayer>) members).addIfAbsent(cp);
     }
 
     /**
@@ -1441,7 +1440,7 @@ public class Clan implements Serializable, Comparable<Clan> {
 
         SimpleClans.getInstance().getRequestManager().removeRequest(getTag());
 
-        SimpleClans.getInstance().getServer().getScheduler().scheduleSyncDelayedTask(SimpleClans.getInstance(), () -> {
+        SimpleClans.getInstance().getFoliaScheduler().runGlobalLater(() -> {
             SimpleClans.getInstance().getClanManager().removeClan(getTag());
             SimpleClans.getInstance().getStorageManager().deleteClan(this);
         }, 1);

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Objects;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
@@ -38,7 +39,7 @@ public final class PermissionsManager {
     private @Nullable Chat chat;
 
     private final HashMap<String, List<String>> permissions = new HashMap<>();
-    private final HashMap<Player, PermissionAttachment> permAttaches = new HashMap<>();
+    private final ConcurrentHashMap<Player, PermissionAttachment> permAttaches = new ConcurrentHashMap<>();
 
     public PermissionsManager() {
         plugin = SimpleClans.getInstance();
@@ -106,9 +107,7 @@ public final class PermissionsManager {
         Player player = cp.toPlayer();
         if (player != null) {
             if (permissions.containsKey(clan.getTag())) {
-                if (!permAttaches.containsKey(player)) {
-                    permAttaches.put(player, player.addAttachment(SimpleClans.getInstance()));
-                }
+                permAttaches.computeIfAbsent(player, p -> p.addAttachment(SimpleClans.getInstance()));
                 //Adds all permissions from his clan
                 for (String perm : getPermissions(clan)) {
                     permAttaches.get(player).setPermission(perm, true);

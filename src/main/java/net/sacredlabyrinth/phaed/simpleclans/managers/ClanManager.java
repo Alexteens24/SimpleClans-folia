@@ -44,7 +44,7 @@ public final class ClanManager {
     private final SimpleClans plugin;
     private final ConcurrentHashMap<String, Clan> clans = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, ClanPlayer> clanPlayers = new ConcurrentHashMap<>();
-    private final HashMap<ClanPlayer, List<Kill>> kills = new HashMap<>();
+    private final ConcurrentHashMap<ClanPlayer, List<Kill>> kills = new ConcurrentHashMap<>();
 
     /**
      *
@@ -70,25 +70,27 @@ public final class ClanManager {
             return;
         }
 
-        List<Kill> list = kills.computeIfAbsent(kill.getKiller(), k -> new ArrayList<>());
+        List<Kill> list = kills.computeIfAbsent(kill.getKiller(), k -> Collections.synchronizedList(new ArrayList<>()));
 
-        Iterator<Kill> iterator = list.iterator();
-        while (iterator.hasNext()) {
-            Kill oldKill = iterator.next();
-            if (oldKill.getVictim().equals(kill.getKiller())) {
-                iterator.remove();
-                continue;
+        synchronized (list) {
+            Iterator<Kill> iterator = list.iterator();
+            while (iterator.hasNext()) {
+                Kill oldKill = iterator.next();
+                if (oldKill.getVictim().equals(kill.getKiller())) {
+                    iterator.remove();
+                    continue;
+                }
+
+                // cleaning
+                final int delay = plugin.getSettingsManager().getInt(KDR_DELAY_BETWEEN_KILLS);
+                long timePassed = oldKill.getTime().until(LocalDateTime.now(), ChronoUnit.MINUTES);
+                if (timePassed >= delay) {
+                    iterator.remove();
+                }
             }
 
-            // cleaning
-            final int delay = plugin.getSettingsManager().getInt(KDR_DELAY_BETWEEN_KILLS);
-            long timePassed = oldKill.getTime().until(LocalDateTime.now(), ChronoUnit.MINUTES);
-            if (timePassed >= delay) {
-                iterator.remove();
-            }
+            list.add(kill);
         }
-
-        list.add(kill);
     }
 
     /**
@@ -103,13 +105,15 @@ public final class ClanManager {
             return false;
         }
 
-        for (Kill oldKill : list) {
-            if (oldKill.getVictim().equals(kill.getVictim())) {
+        synchronized (list) {
+            for (Kill oldKill : list) {
+                if (oldKill.getVictim().equals(kill.getVictim())) {
 
-                final int delay = plugin.getSettingsManager().getInt(KDR_DELAY_BETWEEN_KILLS);
-                long timePassed = oldKill.getTime().until(kill.getTime(), ChronoUnit.MINUTES);
-                if (timePassed < delay) {
-                    return true;
+                    final int delay = plugin.getSettingsManager().getInt(KDR_DELAY_BETWEEN_KILLS);
+                    long timePassed = oldKill.getTime().until(kill.getTime(), ChronoUnit.MINUTES);
+                    if (timePassed < delay) {
+                        return true;
+                    }
                 }
             }
         }

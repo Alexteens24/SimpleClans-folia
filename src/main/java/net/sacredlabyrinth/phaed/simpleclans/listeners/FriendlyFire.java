@@ -11,16 +11,16 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.GLOBAL_FRIENDLY_FIRE;
 import static net.sacredlabyrinth.phaed.simpleclans.managers.SettingsManager.ConfigField.SAFE_CIVILIANS;
 
 public class FriendlyFire extends SCListener {
 
-    private final Map<UUID, Long> warned = new HashMap<>();
+    private final Map<UUID, Long> warned = new ConcurrentHashMap<>();
     private static final long WARN_DELAY = 10000;
 
     public FriendlyFire(@NotNull SimpleClans plugin) {

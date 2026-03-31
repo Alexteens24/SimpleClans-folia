@@ -18,6 +18,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static net.sacredlabyrinth.phaed.simpleclans.SimpleClans.lang;
@@ -35,7 +36,7 @@ public class ClanPlayer implements Serializable, Comparable<ClanPlayer> {
     private String tag;
     private @Nullable Clan clan;
     private boolean friendlyFire;
-    private final Map<Kill.Type, Integer> kills = new HashMap<>();
+    private final Map<Kill.Type, Integer> kills = new ConcurrentHashMap<>();
     private int deaths;
     private long lastSeen;
     private long joinDate;
